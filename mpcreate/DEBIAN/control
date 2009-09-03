@@ -1,0 +1,11 @@
+Package: mpcreate
+Version: 0.1
+Architecture: i386
+Maintainer: Bob Mottram <fuzzgun@gmail.com>
+Depends: mono-runtime (>= 1.1.8.1), mono-2.0-runtime (>= 2.0), mysql-server, libmysql5.0-cil
+Recommends: monodoc-mysql5.0-manual
+Suggests: 
+Section: programming
+Priority: optional
+Homepage: http://code.google.com/p/mindpix/
+Description: Utility for creating and storing mindpixels within a MySql database.

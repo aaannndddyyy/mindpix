@@ -1,0 +1,16 @@
+<Combine fileversion="2.0">
+  <Configurations active="Debug">
+    <Configuration name="Debug" ctype="CombineConfiguration">
+      <Entry build="True" name="mpexport" configuration="Debug" />
+    </Configuration>
+    <Configuration name="Release" ctype="CombineConfiguration">
+      <Entry build="True" name="mpexport" configuration="Release" />
+    </Configuration>
+  </Configurations>
+  <StartMode startupentry="mpexport" single="True">
+    <Execute type="None" entry="mpexport" />
+  </StartMode>
+  <Entries>
+    <Entry filename="mpexport.mdp" />
+  </Entries>
+</Combine>
