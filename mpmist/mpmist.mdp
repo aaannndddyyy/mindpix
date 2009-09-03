@@ -1,9 +1,9 @@
-<Project name="mpcreate" fileversion="2.0" language="C#" targetFramework="2.0" ctype="DotNetProject">
+<Project name="mpmist" fileversion="2.0" language="C#" targetFramework="2.0" ctype="DotNetProject">
   <Configurations active="Debug">
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
-      <Output directory="bin/Debug" assembly="mpcreate" />
+      <Output directory="bin/Debug" assembly="mpmist" />
       <Build debugmode="True" target="Exe" />
-      <Execution runwithwarnings="True" commandlineparameters="-load /usr/bin/mindpixels.txt" consolepause="False" runtime="MsNet" />
+      <Execution runwithwarnings="True" commandlineparameters="-answers test.txt" consolepause="False" runtime="MsNet" />
       <EnvironmentVariables />
       <CodeGeneration compiler="Mcs" warninglevel="3" optimize="False" unsafecodeallowed="False" generateoverflowchecks="False" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
@@ -22,7 +22,6 @@
     <File name="DEBIAN/control" subtype="Code" buildaction="Nothing" />
     <File name="DEBIAN/copyright" subtype="Code" buildaction="Nothing" />
     <File name="DEBIAN/install" subtype="Code" buildaction="Nothing" />
-    <File name="README.txt" subtype="Code" buildaction="Nothing" />
     <File name="soundex.cs" subtype="Code" buildaction="Compile" />
   </Contents>
   <References>

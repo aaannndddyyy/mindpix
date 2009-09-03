@@ -26,7 +26,6 @@ using System.Text;
 using MySql.Data;	
 using MySql.Data.MySqlClient;
 using ca.guitard.jeff.utility;
-using CenterSpace.Free;
 
 namespace mpcreate
 {
@@ -232,30 +231,22 @@ namespace mpcreate
 			s = s.Trim();
 			s = s.ToLower();
 			
-			string[] str = s.Split(' ');
+			char[] ch = s.ToCharArray();
 			
-			MersenneTwister rnd = new MersenneTwister(0);
-			int v = 0;
-			for (int i = 0; i < str.Length; i++)
-			{
-				if (str[i] != "?")
+			int hash = 0;
+            for (int i = 0; i < ch.Length; i++) {
+				if (((ch[i] >= 'a') &&
+				     (ch[i] <= 'z')) ||
+				    ((ch[i] >= '0') &&
+				     (ch[i] <= '9')))
 				{
-					char[] ch = str[i].ToCharArray();
-			        for (int j = 0; j < ch.Length; j++)
-			        {
-						if (((ch[j] >= 'a') &&
-						     (ch[j] <= 'z')) ||
-						    ((ch[j] >= '0') &&
-						     (ch[j] <= '9')))
-				            v += rnd.Next(ch[j] * ch[j]);
-			        }
+                    hash = 31*hash + ch[i];
 				}
-			}
-			MersenneTwister rnd2 = new MersenneTwister(v);
-			return(rnd2.Next(999999999));
+            }
+
+			return(hash);
 		}
-		
-		
+				
 		#region "mysql database"
 		
         private static void CreateTable(
