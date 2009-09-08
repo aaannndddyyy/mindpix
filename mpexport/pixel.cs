@@ -186,20 +186,21 @@ namespace mpexport
                     pos2 = pos + bisectors[i].Length;
                     object2 = cleanObject(qStr.Substring(pos2, qStr.Length - 1 - pos2), 1);
                     Bisector = bisectors[i];
+					if (Bisector.Contains("a type of")) Bisector = " type of ";
+					if (Bisector.Contains("a form of")) Bisector = " type of ";
+					if (Bisector.Contains("have ideas in")) Bisector = " idea ";
+					if (Bisector.Contains("occupation")) Bisector = " occupation ";
+					if (Bisector.Contains("precede")) Bisector = " before ";
+					if (Bisector.Contains("followed")) Bisector = " after ";
+					if (Bisector.Contains("member of the")) Bisector = " member ";
+					if (Bisector.Trim().StartsWith("belong to the ")) Bisector = " " + Bisector.Substring(14) + " ";
+					if (Bisector.Trim().StartsWith("use the ")) Bisector = " " + Bisector.Substring(8) + " ";
+					if (Bisector.Trim().StartsWith("in the ")) Bisector = " " + Bisector.Substring(7) + " ";
+					if (Bisector.Trim().StartsWith("have the ")) Bisector = " " + Bisector.Substring(9) + " ";
+					if (Bisector.Trim().StartsWith("has the ")) Bisector = " " + Bisector.Substring(8) + " ";
+					if ((Bisector == " a ") || (Bisector == " an ")) Bisector = " is a ";
+					if (Bisector == " in ") Bisector = " located in ";
                     Bisector_index = i;
-                    if (bisectors_property_flags[i, PROPERTY_ISA])
-                    {
-                        Bisector = "is a";
-                        Bisector_index = 0;
-                    }
-                    else
-                    {
-                        if (bisectors_property_flags[i, PROPERTY_HAS])
-                        {
-                            Bisector = "has";
-                            Bisector_index = 1;
-                        }
-                    }
                     found = true;
                 }
                 else i++;

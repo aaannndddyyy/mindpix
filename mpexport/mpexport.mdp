@@ -3,7 +3,7 @@
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="mpexport" />
       <Build debugmode="True" target="Exe" />
-      <Execution runwithwarnings="True" commandlineparameters="-pop pop.txt" consolepause="False" runtime="MsNet" />
+      <Execution runwithwarnings="True" commandlineparameters="-mindpixels /home/motters/develop/mindpix/mpcreate/bin/Debug/wikipedia.txt -oc oc.txt" consolepause="False" runtime="MsNet" />
       <EnvironmentVariables />
       <CodeGeneration compiler="Mcs" warninglevel="3" optimize="False" unsafecodeallowed="False" generateoverflowchecks="False" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>

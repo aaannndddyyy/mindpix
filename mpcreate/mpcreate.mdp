@@ -3,7 +3,7 @@
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="mpcreate" />
       <Build debugmode="True" target="Exe" />
-      <Execution runwithwarnings="True" commandlineparameters="-load /usr/bin/mindpixels.txt" consolepause="False" runtime="MsNet" />
+      <Execution runwithwarnings="True" commandlineparameters="-fb /home/motters/freebase" consolepause="False" runtime="MsNet" />
       <EnvironmentVariables />
       <CodeGeneration compiler="Mcs" warninglevel="3" optimize="False" unsafecodeallowed="False" generateoverflowchecks="False" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
@@ -24,6 +24,9 @@
     <File name="DEBIAN/install" subtype="Code" buildaction="Nothing" />
     <File name="README.txt" subtype="Code" buildaction="Nothing" />
     <File name="soundex.cs" subtype="Code" buildaction="Compile" />
+    <File name="wikipedia.cs" subtype="Code" buildaction="Compile" />
+    <File name="names.cs" subtype="Code" buildaction="Compile" />
+    <File name="freebase.cs" subtype="Code" buildaction="Compile" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />

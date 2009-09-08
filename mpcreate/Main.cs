@@ -32,7 +32,7 @@ namespace mpcreate
 	class MainClass
 	{
 		public static void Main(string[] args)
-		{
+		{			
 			Console.WriteLine("mpcreate: A utility for creating mindpixels");
 			Console.WriteLine("Version 0.1");
 			
@@ -75,143 +75,161 @@ namespace mpcreate
             }
             else
             {
-				string server_name_str = commandline.GetParameterValue("server", parameters);
-				if (server_name_str != "") server_name = server_name_str;
-				
-				string user_name_str = commandline.GetParameterValue("username", parameters);
-				if (user_name_str != "") user_name = user_name_str;
-
-				string password_str = commandline.GetParameterValue("password", parameters);
-				if (password_str != "") password = password_str;						
-				
-				string database_str = commandline.GetParameterValue("db", parameters);
-				if (database_str != "") database_name = database_str;
-				
-                string load_filename = commandline.GetParameterValue("load", parameters);
-				if (load_filename != "")
-				{									
-				    loadGAC(
-		                load_filename, 
-                        "Mind Hack",
-		                mp_fields,
-		                users_fields,
-		                server_name,
-		                database_name, 
-		                user_name, 
-		                password, 
-		                mp_table_name,
-		                users_table_name);
+				string wikipedia_directory = commandline.GetParameterValue("wp", parameters);
+				if (wikipedia_directory != "")
+				{
+			        WikipediaFactGrabber grab = new WikipediaFactGrabber();
+			        grab.ProcessWikipedia(wikipedia_directory, "wikipedia.txt");					
 				}
 				else
-				{
-	                string random_pixels_filename = commandline.GetParameterValue("random", parameters);
-					if (random_pixels_filename != "")
-					{					
-						int no_of_random_pixels = 1;
-					    SaveRandomMindpixels(random_pixels_filename, server_name, database_name, user_name, password, mp_table_name, no_of_random_pixels);
+				{				
+					string freebase_directory = commandline.GetParameterValue("fb", parameters);
+					if (freebase_directory != "")
+					{
+						freebase fb = new freebase();
+						fb.ProccessFreebase(freebase_directory, "freebase.txt");
 					}
 					else
-					{				
-		                string user_pixels_filename = commandline.GetParameterValue("userpixels", parameters);
-						if (user_pixels_filename != "")
-						{
-						    SaveUserPixels(user_pixels_filename, server_name, database_name, user_name, password, users_table_name);
+					{
+						string server_name_str = commandline.GetParameterValue("server", parameters);
+						if (server_name_str != "") server_name = server_name_str;
+						
+						string user_name_str = commandline.GetParameterValue("username", parameters);
+						if (user_name_str != "") user_name = user_name_str;
+		
+						string password_str = commandline.GetParameterValue("password", parameters);
+						if (password_str != "") password = password_str;						
+						
+						string database_str = commandline.GetParameterValue("db", parameters);
+						if (database_str != "") database_name = database_str;
+						
+		                string load_filename = commandline.GetParameterValue("load", parameters);
+						if (load_filename != "")
+						{									
+						    loadGAC(
+				                load_filename, 
+		                        "Mind Hack",
+				                mp_fields,
+				                users_fields,
+				                server_name,
+				                database_name, 
+				                user_name, 
+				                password, 
+				                mp_table_name,
+				                users_table_name);
 						}
 						else
-						{				
-			                string save_filename = commandline.GetParameterValue("save", parameters);
-							if (save_filename != "")
-							{
-								SaveMindpixels(save_filename, server_name, database_name, user_name, password, mp_table_name);
+						{
+			                string random_pixels_filename = commandline.GetParameterValue("random", parameters);
+							if (random_pixels_filename != "")
+							{					
+								int no_of_random_pixels = 1;
+							    SaveRandomMindpixels(random_pixels_filename, server_name, database_name, user_name, password, mp_table_name, no_of_random_pixels);
 							}
 							else
-							{
-				                string question = commandline.GetParameterValue("q", parameters);
-								if (question != "")
+							{				
+				                string user_pixels_filename = commandline.GetParameterValue("userpixels", parameters);
+								if (user_pixels_filename != "")
 								{
-				                    string answer = commandline.GetParameterValue("a", parameters);
-									if (answer != "")
+								    SaveUserPixels(user_pixels_filename, server_name, database_name, user_name, password, users_table_name);
+								}
+								else
+								{				
+					                string save_filename = commandline.GetParameterValue("save", parameters);
+									if (save_filename != "")
 									{
-										bool answer_value = false;
-										answer = answer.ToLower();
-										if ((answer == "yes") || 
-										    (answer == "y") ||
-										    (answer == "true") ||
-										    (answer == "t"))
-											answer_value = true;
-																
-										int question_hash = GetHashCode(question);
-																											
-							            // insert the field names into a list so that we can easily search it
-							            List<string> mp_fields_to_be_inserted = new List<string>();
-							            List<string> mp_field_type = new List<string>();
-							            for (int i = 0; i < mp_fields.Length; i += 2)
-							            {
-							                mp_fields_to_be_inserted.Add(mp_fields[i]);
-							                mp_field_type.Add(mp_fields[i + 1]);
-							            }
-				
-							            List<string> users_fields_to_be_inserted = new List<string>();
-							            List<string> users_field_type = new List<string>();
-							            for (int i = 0; i < users_fields.Length; i += 2)
-							            {
-							                users_fields_to_be_inserted.Add(users_fields[i]);
-							                users_field_type.Add(users_fields[i + 1]);
-							            }
-										
-							            // create tables if necessary
-							            CreateTable(
-							                server_name,
-							                database_name,
-							                user_name,
-							                password,
-							                mp_table_name,
-							                mp_fields_to_be_inserted,
-							                mp_field_type, 0,1,5);
-																
-							            CreateTable(
-							                server_name,
-							                database_name,
-							                user_name,
-							                password,
-							                users_table_name,
-							                users_fields_to_be_inserted,
-							                users_field_type,-1,0,1);
-										
-						                InsertMindpixelIntoMySql(
-										    question_hash,
-						                    question,
-						                    answer_value,
-						                    server_name,
-						                    database_name,
-						                    user_name,
-						                    password,
-						                    mp_table_name,
-						                    mp_fields_to_be_inserted,
-						                    mp_field_type);
-																
-						                InsertMindpixelUserDataIntoMySql(
-										    question_hash,
-						                    question,
-						                    answer_value,
-						                    server_name,
-						                    database_name,
-						                    user_name,
-						                    password,
-						                    users_table_name,
-						                    users_fields_to_be_inserted,
-						                    users_field_type);
-										
-										Console.WriteLine("Mindpixel added");										
+										SaveMindpixels(save_filename, server_name, database_name, user_name, password, mp_table_name);
 									}
 									else
 									{
-				  					    Console.WriteLine("Please specify a yes/no answer using the -a option");
+						                string question = commandline.GetParameterValue("q", parameters);
+										if (question != "")
+										{
+						                    string answer = commandline.GetParameterValue("a", parameters);
+											if (answer != "")
+											{
+												bool answer_value = false;
+												answer = answer.ToLower();
+												if ((answer == "yes") || 
+												    (answer == "y") ||
+												    (answer == "true") ||
+												    (answer == "t"))
+													answer_value = true;
+																		
+												int question_hash = GetHashCode(question);
+																													
+									            // insert the field names into a list so that we can easily search it
+									            List<string> mp_fields_to_be_inserted = new List<string>();
+									            List<string> mp_field_type = new List<string>();
+									            for (int i = 0; i < mp_fields.Length; i += 2)
+									            {
+									                mp_fields_to_be_inserted.Add(mp_fields[i]);
+									                mp_field_type.Add(mp_fields[i + 1]);
+									            }
+						
+									            List<string> users_fields_to_be_inserted = new List<string>();
+									            List<string> users_field_type = new List<string>();
+									            for (int i = 0; i < users_fields.Length; i += 2)
+									            {
+									                users_fields_to_be_inserted.Add(users_fields[i]);
+									                users_field_type.Add(users_fields[i + 1]);
+									            }
+												
+									            // create tables if necessary
+									            CreateTable(
+									                server_name,
+									                database_name,
+									                user_name,
+									                password,
+									                mp_table_name,
+									                mp_fields_to_be_inserted,
+									                mp_field_type, 0,1,5);
+																		
+									            CreateTable(
+									                server_name,
+									                database_name,
+									                user_name,
+									                password,
+									                users_table_name,
+									                users_fields_to_be_inserted,
+									                users_field_type,-1,0,1);
+												
+								                InsertMindpixelIntoMySql(
+												    question_hash,
+								                    question,
+								                    answer_value,
+								                    server_name,
+								                    database_name,
+								                    user_name,
+								                    password,
+								                    mp_table_name,
+								                    mp_fields_to_be_inserted,
+								                    mp_field_type);
+																		
+								                InsertMindpixelUserDataIntoMySql(
+												    question_hash,
+								                    question,
+								                    answer_value,
+								                    server_name,
+								                    database_name,
+								                    user_name,
+								                    password,
+								                    users_table_name,
+								                    users_fields_to_be_inserted,
+								                    users_field_type);
+												
+												Console.WriteLine("Mindpixel added");										
+											}
+											else
+											{
+						  					    Console.WriteLine("Please specify a yes/no answer using the -a option");
+											}
+										}
+										else
+										{
+											Console.WriteLine("Please specify a question using the -q option");
+										}
 									}
-								}
-								else
-								{
-									Console.WriteLine("Please specify a question using the -q option");
 								}
 							}
 						}
@@ -1301,6 +1319,8 @@ namespace mpcreate
             ValidParameters.Add("username");
             ValidParameters.Add("password");
 			ValidParameters.Add("server");
+			ValidParameters.Add("wp");
+			ValidParameters.Add("fb");
 			ValidParameters.Add("db");
 			ValidParameters.Add("load");
 			ValidParameters.Add("save");
@@ -1330,7 +1350,9 @@ namespace mpcreate
             Console.WriteLine("         -username <username>");
             Console.WriteLine("         -password <password>");
             Console.WriteLine("         -server <server name>");
-            Console.WriteLine("         -db <mysql database name>");
+            Console.WriteLine("         -wp <wikipedia schools edition directory>");
+            Console.WriteLine("         -fb <Freebase TSV data directory>");
+			Console.WriteLine("         -db <mysql database name>");
             Console.WriteLine("         -load <mindpixel file>");
             Console.WriteLine("         -save <mindpixel file>");
             Console.WriteLine("         -random <filename>");

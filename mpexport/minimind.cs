@@ -116,6 +116,7 @@ namespace mpexport
         }
 		
         //types of bisector property
+		const int no_of_properties = 10;
         const int PROPERTY_ISA = 0;
         const int PROPERTY_HAS = 1;
         const int PROPERTY_LOCALITY = 2;
@@ -156,7 +157,20 @@ namespace mpexport
                 no_of_bisectors++;
             }
         }
-						
+
+        void addBisector(
+		    string str, 
+		    int property)
+        {
+            if (no_of_bisectors < bisector.Length)
+            {
+                bisector[no_of_bisectors] = " " + str.ToLower() + " ";
+				for (int i = 0; i < no_of_properties; i++) bisector_property_flags[no_of_bisectors, property] = false;
+				bisector_property_flags[no_of_bisectors, property] = true;
+                no_of_bisectors++;
+            }
+        }
+		
         void loadGAC(int itterations, bool show_mindpixels)
         {
             int i = 0;
@@ -165,7 +179,7 @@ namespace mpexport
             float coherence;
 			Random rnd = new Random();
 
-            while ((i < itterations) && (!oRead.EndOfStream))
+            while (!oRead.EndOfStream)
             {
                 str = oRead.ReadLine();
                 if (!initialstringFound)
@@ -189,7 +203,7 @@ namespace mpexport
                             pix.question = question.ToLower();
                             pix.update(prefix, no_of_prefixes, bisector, bisector_property_flags, no_of_bisectors);
                             if (pix.object1 != "")
-                            {
+                            {								
                                 no_of_parsed_pixels++;
 
                                 /// add words to the dictionary
@@ -448,7 +462,57 @@ namespace mpexport
             addBisector("is a", 0, true, false, false, false, false, false, false, false, false);
             addBisector("has", 0, false, true, false, false, false, false, false, false, false);  
 
+            addBisector("belong to the dynasty", 0, false, true, false, false, false, false, false, false, false);  
+            addBisector("in the professional field", 0, false, true, false, false, false, false, false, false, false);  
+            addBisector("attend", 0, false, true, false, false, false, false, false, false, false);  
+            addBisector("influence", 0, false, true, false, false, false, false, false, false, false);  
+			addBisector("have the vice president", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have the orbital period", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have the orbital eccentricity", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have the occupation", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have the religious stance", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have the conservation status", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have the government type", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have the latin name", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have the genre", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have a memory of", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have ideas in", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have the official language", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("reign between", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("win the award", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("appointed to the role of", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("interested in", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("crowned on", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("born named", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("born on", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("born in", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("die on", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("die in", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("die from", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("in the time zone", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("use the currency", 0, false, true, false, false, false, false, false, false, false);
+            addBisector("a member of the", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("follow the school of thought", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have the patron saint", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have the media type", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("published in", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("published on", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("published by", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("preceded by", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("followed by", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("launched on", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("advised by", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("belong to the enthinic group", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("belong to the industry", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("belong to the subspecies", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("occur between", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("occur on", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("orbit around", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("speak the language", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("discovered using", 0, false, true, false, false, false, false, false, false, false);
+
             addBisector("like to play the", 10, false, false, false, false, false, true, false, false, false);
+			addBisector("play the", 0, false, true, false, false, false, false, false, false, false);
             addBisector("like to play with", 10, false, false, false, false, false, true, false, false, false);
 
             addBisector("a part of the", 0, false, false, false, false, false, false, false, false, true);
@@ -636,6 +700,7 @@ namespace mpexport
             addBisector("originally done by", 0, false, false, false, false, false, true, true, false, false);
             addBisector("originally discovered by", 0, false, false, false, false, false, true, true, false, false);
 
+            addBisector("better known as", 0, false, false, false, false, false, false, true, false, true);
             addBisector("sometimes known as", 0, false, false, false, false, false, false, true, false, true);
             addBisector("sometimes refered to as", 0, false, false, false, false, false, false, true, false, true);
             addBisector("refered to as", 0, false, false, false, false, false, false, false, false, true);
@@ -1273,6 +1338,7 @@ namespace mpexport
             addPrefix("usually");
             addPrefix("when");
             addPrefix("not");
+			addPrefix("does");
         }
 				
 		#endregion

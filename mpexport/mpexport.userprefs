@@ -1,18 +1,15 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workbench ActiveDocument="commandline.cs" ctype="Workbench">
+  <MonoDevelop.Ide.Workbench ActiveDocument="minimind.cs" ctype="Workbench">
     <Files>
       <File FileName="../../sentience/applications/fishfood/MersenneTwister.cs" Line="444" Column="1" />
       <File FileName="Main.cs" Line="71" Column="22" />
-      <File FileName="minimind.cs" Line="180" Column="22" />
-      <File FileName="oc.cs" Line="1" Column="1" />
-      <File FileName="pixel.cs" Line="1" Column="1" />
-      <File FileName="commandline.cs" Line="1" Column="1" />
+      <File FileName="minimind.cs" Line="465" Column="47" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
           <Node name="mpexport" expanded="True">
-            <Node name="commandline.cs" selected="True" />
+            <Node name="minimind.cs" selected="True" />
           </Node>
         </State>
       </Pad>
