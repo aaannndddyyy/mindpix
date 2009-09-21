@@ -462,6 +462,12 @@ namespace mpexport
             addBisector("is a", 0, true, false, false, false, false, false, false, false, false);
             addBisector("has", 0, false, true, false, false, false, false, false, false, false);  
 
+            addBisector("a prerequisite of", 0, false, true, false, false, false, false, false, false, false);  
+            addBisector("cause the desire", 0, false, true, false, false, false, false, false, false, false);  
+            addBisector("have the first sub event", 0, false, true, false, false, false, false, false, false, false);  
+            addBisector("capable of", 0, false, true, false, false, false, false, false, false, false);  
+            addBisector("have the sub event", 0, false, true, false, false, false, false, false, false, false);  
+            addBisector("motivated by the goal", 0, false, true, false, false, false, false, false, false, false);  
             addBisector("belong to the dynasty", 0, false, true, false, false, false, false, false, false, false);  
             addBisector("in the professional field", 0, false, true, false, false, false, false, false, false, false);  
             addBisector("attend", 0, false, true, false, false, false, false, false, false, false);  
@@ -475,6 +481,7 @@ namespace mpexport
 			addBisector("have the government type", 0, false, true, false, false, false, false, false, false, false);
 			addBisector("have the latin name", 0, false, true, false, false, false, false, false, false, false);
 			addBisector("have the genre", 0, false, true, false, false, false, false, false, false, false);
+			addBisector("have a property ", 0, false, true, false, false, false, false, false, false, false);
 			addBisector("have a memory of", 0, false, true, false, false, false, false, false, false, false);
 			addBisector("have ideas in", 0, false, true, false, false, false, false, false, false, false);
 			addBisector("have the official language", 0, false, true, false, false, false, false, false, false, false);
@@ -955,6 +962,7 @@ namespace mpexport
             addBisector("on the", 0, false, false, true, false, false, false, false, false, false);
             addBisector("near to", 0, false, false, true, true, false, false, false, false, false);
             addBisector("used to", 0, false, false, false, false, false, false, false, true, false);
+            addBisector("used for", 0, false, false, false, false, false, false, false, true, false);
             addBisector("close to", 0, false, false, true, true, false, false, false, false, false);
 
             addBisector("an important part of", 0, false, false, false, false, false, false, false, false, true);

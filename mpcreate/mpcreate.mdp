@@ -3,7 +3,7 @@
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="mpcreate" />
       <Build debugmode="True" target="Exe" />
-      <Execution runwithwarnings="True" commandlineparameters="-fb /home/motters/freebase" consolepause="False" runtime="MsNet" />
+      <Execution runwithwarnings="True" commandlineparameters="-cn /home/motters/conceptnet.n3" consolepause="False" runtime="MsNet" />
       <EnvironmentVariables />
       <CodeGeneration compiler="Mcs" warninglevel="3" optimize="False" unsafecodeallowed="False" generateoverflowchecks="False" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
@@ -27,6 +27,7 @@
     <File name="wikipedia.cs" subtype="Code" buildaction="Compile" />
     <File name="names.cs" subtype="Code" buildaction="Compile" />
     <File name="freebase.cs" subtype="Code" buildaction="Compile" />
+    <File name="conceptnet.cs" subtype="Code" buildaction="Compile" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
