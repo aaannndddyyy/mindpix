@@ -1,14 +1,17 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workbench ActiveDocument="conceptnet.cs" ctype="Workbench">
+  <MonoDevelop.Ide.Workbench ActiveDocument="AssemblyInfo.cs" ctype="Workbench">
     <Files>
       <File FileName="../../sentience/applications/fishfood/MersenneTwister.cs" Line="444" Column="1" />
-      <File FileName="conceptnet.cs" Line="100" Column="1" />
+      <File FileName="conceptnet.cs" Line="104" Column="12" />
+      <File FileName="DEBIAN/control" Line="1" Column="1" />
+      <File FileName="Main.cs" Line="37" Column="34" />
+      <File FileName="AssemblyInfo.cs" Line="1" Column="1" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
           <Node name="mpcreate" expanded="True">
-            <Node name="conceptnet.cs" selected="True" />
+            <Node name="AssemblyInfo.cs" selected="True" />
           </Node>
         </State>
       </Pad>

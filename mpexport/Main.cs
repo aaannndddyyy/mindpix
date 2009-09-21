@@ -30,7 +30,7 @@ namespace mpexport
 		public static void Main(string[] args)
 		{
 			Console.WriteLine("mpexport: A utility for exporting mindpixel data to other formats");
-			Console.WriteLine("Version 0.1");
+			Console.WriteLine("Version 0.2");
 			
             // the character used to indicate that what follows is a parameter name
             const string switch_character = "-";

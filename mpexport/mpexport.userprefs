@@ -1,8 +1,9 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workbench ActiveDocument="Main.cs" ctype="Workbench">
     <Files>
-      <File FileName="Main.cs" Line="71" Column="22" />
+      <File FileName="Main.cs" Line="37" Column="4" />
       <File FileName="minimind.cs" Line="965" Column="34" />
+      <File FileName="DEBIAN/control" Line="2" Column="13" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">

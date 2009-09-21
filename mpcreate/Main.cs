@@ -34,7 +34,7 @@ namespace mpcreate
 		public static void Main(string[] args)
 		{			
 			Console.WriteLine("mpcreate: A utility for creating mindpixels");
-			Console.WriteLine("Version 0.1");
+			Console.WriteLine("Version 0.2");
 			
             // default parameters for the database
             string server_name = "localhost";
