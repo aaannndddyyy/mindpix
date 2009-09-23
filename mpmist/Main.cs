@@ -34,7 +34,7 @@ namespace mpcreate
 		public static void Main(string[] args)
 		{
 			Console.WriteLine("Minimum Intelligent Signal Test M.I.S.T.");
-			Console.WriteLine("Version 0.1");
+			Console.WriteLine("Version 0.2");
 			
             // default parameters for the database
             string server_name = "localhost";
@@ -342,8 +342,8 @@ namespace mpcreate
 		#endregion
 
 		#region "return number of records in a table"
-		
-        private static int NoOfRecords(
+
+        private static int NoOfTrueRecords(
 		    string server_name,
 		    string database_name, 
 		    string user_name, 
@@ -363,7 +363,39 @@ namespace mpcreate
                 + "password=" + password + ";";
 			
 		    ArrayList result = RunMySqlCommand(
-			    "SELECT COUNT(1) FROM " + table_name + ";",
+			    "SELECT COUNT(1) FROM " + table_name + " WHERE YesVotes > NoVotes;",
+		        connection_str, 1);
+						
+			if (result.Count > 0)
+			{
+				ArrayList row = (ArrayList)result[0];
+				count = Convert.ToInt32(row[0]);
+			}
+			
+			return(count);
+		}
+
+        private static int NoOfFalseRecords(
+		    string server_name,
+		    string database_name, 
+		    string user_name, 
+		    string password, 
+		    string table_name)
+		{
+			int count = 0;
+		
+            if ((server_name == "") ||
+                (server_name == null))
+                server_name = "localhost";
+			
+            string connection_str =
+                "server=" + server_name + ";"
+                + "database=" + database_name + ";"
+                + "uid=" + user_name + ";"
+                + "password=" + password + ";";
+			
+		    ArrayList result = RunMySqlCommand(
+			    "SELECT COUNT(1) FROM " + table_name + " WHERE YesVotes < NoVotes;",
 		        connection_str, 1);
 						
 			if (result.Count > 0)
@@ -388,7 +420,14 @@ namespace mpcreate
 		    string mp_table_name,
 		    int no_of_samples)
 		{
-			int no_of_records = NoOfRecords(
+			int no_of_true_records = NoOfTrueRecords(
+		        server_name,
+		        database_name, 
+		        user_name, 
+		        password, 
+		        mp_table_name);
+			
+			int no_of_false_records = NoOfFalseRecords(
 		        server_name,
 		        database_name, 
 		        user_name, 
@@ -396,8 +435,10 @@ namespace mpcreate
 		        mp_table_name);
 			             
 			if (no_of_samples < 1) no_of_samples = 1;			
-			int max = no_of_records;
-			if ((no_of_records > 0) && (max > 0))
+			int max_true = no_of_true_records;
+			int max_false = no_of_false_records;
+			if ((no_of_true_records > 0) && 
+			    (no_of_false_records > 0))
 			{
 			    Random rnd = new Random();
 				
@@ -428,14 +469,27 @@ namespace mpcreate
 				if (allowWrite)
 				{
 					Console.Write("Creating MIST test consisting of " + no_of_samples.ToString() + " samples...");
-								
+						
+					int start_row;
+					ArrayList result = null;
 					for (int sample = 0; sample < no_of_samples; sample++)
-					{				
-				        int start_row = rnd.Next(max);				
-									
-				        ArrayList result = RunMySqlCommand(
-					        "SELECT * FROM " + mp_table_name + " LIMIT 1 OFFSET " + start_row.ToString(),
-				            connection_str, no_of_fields);
+					{
+						if (rnd.Next(1000) > 500)
+						{
+					        start_row = rnd.Next(max_true);
+										
+					        result = RunMySqlCommand(
+						        "SELECT * FROM " + mp_table_name + " WHERE YesVotes > NoVotes LIMIT 1 OFFSET " + start_row.ToString(),
+					            connection_str, no_of_fields);
+						}
+						else
+						{
+					        start_row = rnd.Next(max_false);
+										
+					        result = RunMySqlCommand(
+						        "SELECT * FROM " + mp_table_name + " WHERE YesVotes < NoVotes LIMIT 1 OFFSET " + start_row.ToString(),
+					            connection_str, no_of_fields);
+						}
 						
 						if (result.Count > 0)
 						{

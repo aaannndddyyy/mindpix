@@ -1,7 +1,8 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workbench ActiveDocument="Main.cs" ctype="Workbench">
     <Files>
-      <File FileName="Main.cs" Line="37" Column="4" />
+      <File FileName="../../sentience/applications/fishfood/MersenneTwister.cs" Line="444" Column="1" />
+      <File FileName="Main.cs" Line="36" Column="13" />
       <File FileName="minimind.cs" Line="965" Column="34" />
       <File FileName="DEBIAN/control" Line="2" Column="13" />
     </Files>
@@ -9,7 +10,6 @@
       <Pad Id="ProjectPad">
         <State expanded="True">
           <Node name="mpexport" expanded="True">
-            <Node name="DEBIAN" expanded="True" />
             <Node name="Main.cs" selected="True" />
           </Node>
         </State>

@@ -32,7 +32,23 @@ namespace mpcreate
 	class MainClass
 	{
 		public static void Main(string[] args)
-		{			
+		{	
+			/*
+			Console.WriteLine("105 = " + phoneme.ConvertNumber(105));
+			Console.WriteLine(phoneme.ConvertText("Alan's  psychedelic breakfast"));
+			byte[] formants = phoneme.FormantsNormalisedSimple("This is a test", 16);
+			Console.WriteLine(phoneme.StringFromFormants(formants));
+			for (int i = 0; i < formants.Length; i++)
+				Console.Write(formants[i].ToString() + " ");
+			Console.WriteLine("");
+			
+			int diff = phoneme.Difference("Cat food", "Dog loop", 16, 20);
+			Console.WriteLine("diff = " + diff.ToString());
+			diff = phoneme.Difference("Cake", "Bake", 16, 20);
+			Console.WriteLine("diff = " + diff.ToString());
+			*/
+			
+			
 			Console.WriteLine("mpcreate: A utility for creating mindpixels");
 			Console.WriteLine("Version 0.2");
 			
@@ -50,7 +66,8 @@ namespace mpcreate
                 "Question", "TEXT",
                 "YesVotes", "INT",
                 "NoVotes", "INT",
-                "Coherence", "FLOAT"
+                "Coherence", "FLOAT",
+				"Profile", "TEXT",
             };
 
 			string[] users_fields = {
@@ -245,7 +262,6 @@ namespace mpcreate
 					}
 				}
 			}
-			
 		}
 		
 		/// <summary>
@@ -329,6 +345,10 @@ namespace mpcreate
 					Query += "INDEX (" + fields_to_be_inserted[index_field1] + ")";
 					if (index_field2 > -1) Query += ",INDEX (" + fields_to_be_inserted[index_field2] + ")";
 				}
+				if (table_name == "mindpixels")
+				{
+					Query += ",FULLTEXT INDEX (Profile)";
+				}
 				Query += ")";
 
                 MySqlCommand addxml = new MySqlCommand(Query, connection);
@@ -340,8 +360,9 @@ namespace mpcreate
                 {
                     addxml.ExecuteNonQuery();
                 }
-                catch
+                catch (Exception ex)
                 {
+					Console.WriteLine("Can't create table " + ex.Message);
                 }
 
                 connection.Close();
@@ -425,6 +446,9 @@ namespace mpcreate
             if ((server_name == "") ||
                 (server_name == null))
                 server_name = "localhost";
+			
+			byte[] formants = phoneme.FormantsNormalisedSimple(question, 64);
+			string profile = phoneme.StringFromFormants(formants);
 						
 			string connection_str = 
                 "server=" + server_name + ";"
@@ -480,7 +504,8 @@ namespace mpcreate
 				    Query = "UPDATE " + table_name + 
 						" SET YesVotes='" + YesVotes.ToString() + "'," +
 						" NoVotes='" + NoVotes.ToString() + "'," +
-						" Coherence='" + coherence.ToString() + "'" +
+						" Coherence='" + coherence.ToString() + "'," +
+					    " Profile='" + profile + "'" +
 					    " WHERE Id=CAST(?get_id as BINARY(16));";
 					
                     MySqlConnection connection = new MySqlConnection();
@@ -552,6 +577,8 @@ namespace mpcreate
 				field_value.Add(NoVotes.ToString());				
 				field_name.Add("Coherence");
 				field_value.Add(coherence.ToString());
+			    field_name.Add("Profile");
+			    field_value.Add(profile);
 				
 				// add new pixel
 	            MySqlConnection connection = new MySqlConnection();
@@ -677,6 +704,9 @@ namespace mpcreate
             if ((server_name == "") ||
                 (server_name == null))
                 server_name = "localhost";
+			
+			byte[] formants = phoneme.FormantsNormalisedSimple(question, 64);
+			string profile = phoneme.StringFromFormants(formants);			
 						
 			string connection_str = 
                 "server=" + server_name + ";"
@@ -714,6 +744,8 @@ namespace mpcreate
 			field_value.Add(NoVotes.ToString());				
 			field_name.Add("Coherence");
 			field_value.Add(coherence.ToString());
+			field_name.Add("Profile");
+			field_value.Add(profile);
 			
 			// add new pixel
             MySqlConnection connection = new MySqlConnection();
@@ -1090,6 +1122,70 @@ namespace mpcreate
 			
 			return(count);
 		}
+
+        private static int NoOfTrueRecords(
+		    string server_name,
+		    string database_name, 
+		    string user_name, 
+		    string password, 
+		    string table_name)
+		{
+			int count = 0;
+		
+            if ((server_name == "") ||
+                (server_name == null))
+                server_name = "localhost";
+			
+            string connection_str =
+                "server=" + server_name + ";"
+                + "database=" + database_name + ";"
+                + "uid=" + user_name + ";"
+                + "password=" + password + ";";
+			
+		    ArrayList result = RunMySqlCommand(
+			    "SELECT COUNT(1) FROM " + table_name + " WHERE YesVotes > NoVotes;",
+		        connection_str, 1);
+						
+			if (result.Count > 0)
+			{
+				ArrayList row = (ArrayList)result[0];
+				count = Convert.ToInt32(row[0]);
+			}
+			
+			return(count);
+		}
+
+        private static int NoOfFalseRecords(
+		    string server_name,
+		    string database_name, 
+		    string user_name, 
+		    string password, 
+		    string table_name)
+		{
+			int count = 0;
+		
+            if ((server_name == "") ||
+                (server_name == null))
+                server_name = "localhost";
+			
+            string connection_str =
+                "server=" + server_name + ";"
+                + "database=" + database_name + ";"
+                + "uid=" + user_name + ";"
+                + "password=" + password + ";";
+			
+		    ArrayList result = RunMySqlCommand(
+			    "SELECT COUNT(1) FROM " + table_name + " WHERE YesVotes < NoVotes;",
+		        connection_str, 1);
+						
+			if (result.Count > 0)
+			{
+				ArrayList row = (ArrayList)result[0];
+				count = Convert.ToInt32(row[0]);
+			}
+			
+			return(count);
+		}
 		
 		#endregion
 
@@ -1104,18 +1200,30 @@ namespace mpcreate
 		    string mp_table_name,
 		    int no_of_pixels)
 		{
-			int no_of_records = NoOfRecords(
-		        server_name,
-		        database_name, 
-		        user_name, 
-		        password, 
-		        mp_table_name);
-			             
+			Random rnd = new Random();
+			bool probably_true = false;
+			if (rnd.Next(10000) > 5000) probably_true = true;
+			
+			int no_of_records;
+			if (probably_true)
+			    no_of_records = NoOfTrueRecords(
+		            server_name,
+		            database_name, 
+		            user_name, 
+		            password, 
+		            mp_table_name);
+			else
+			    no_of_records = NoOfFalseRecords(
+		            server_name,
+		            database_name, 
+		            user_name, 
+		            password, 
+		            mp_table_name);
+							             
 			if (no_of_pixels < 1) no_of_pixels = 1;			
 			int max = no_of_records-no_of_pixels+1;
 			if ((no_of_records > 0) && (max > 0))
-			{
-			    Random rnd = new Random();
+			{			    
 			    int start_row = rnd.Next(max);				
 				
 	            StreamWriter oWrite = null;
@@ -1133,8 +1241,14 @@ namespace mpcreate
 	                + "uid=" + user_name + ";"
 	                + "password=" + password + ";";
 				
+				string Query = "";
+				if (probably_true)
+				    Query = "SELECT * FROM " + mp_table_name + " WHERE YesVotes > NoVotes LIMIT " + no_of_pixels.ToString() + " OFFSET " + start_row.ToString();
+				else
+				    Query = "SELECT * FROM " + mp_table_name + " WHERE YesVotes < NoVotes LIMIT " + no_of_pixels.ToString() + " OFFSET " + start_row.ToString();
+				
 			    ArrayList result = RunMySqlCommand(
-				    "SELECT * FROM " + mp_table_name + " LIMIT " + no_of_pixels.ToString() + " OFFSET " + start_row.ToString(),
+				    Query,
 			        connection_str, no_of_fields);
 				
 	            try
@@ -1143,7 +1257,7 @@ namespace mpcreate
 	            }
 	            catch
 	            {
-	                allowWrite = false;
+	                allowWrite = false;					
 	            }			
 				
 				if (allowWrite)

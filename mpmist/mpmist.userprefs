@@ -1,15 +1,18 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workbench ActiveDocument="README.txt" ctype="Workbench">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Main.cs" ctype="Workbench">
     <Files>
-      <File FileName="Main.cs" Line="3" Column="23" />
+      <File FileName="Main.cs" Line="554" Column="13" />
       <File FileName="../../sentience/applications/fishfood/MersenneTwister.cs" Line="444" Column="1" />
-      <File FileName="AssemblyInfo.cs" Line="8" Column="62" />
+      <File FileName="AssemblyInfo.cs" Line="20" Column="32" />
       <File FileName="README.txt" Line="1" Column="1" />
+      <File FileName="DEBIAN/control" Line="2" Column="13" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
-        <State expanded="True" selected="True">
-          <Node name="mpmist" expanded="True" />
+        <State expanded="True">
+          <Node name="mpmist" expanded="True" selected="True">
+            <Node name="DEBIAN" expanded="True" />
+          </Node>
         </State>
       </Pad>
       <Pad Id="ClassPad">
