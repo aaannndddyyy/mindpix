@@ -138,7 +138,7 @@ namespace mpcreate
 							
 							string database_str = commandline.GetParameterValue("db", parameters);
 							if (database_str != "") database_name = database_str;
-							
+														
 			                string load_filename = commandline.GetParameterValue("load", parameters);
 							if (load_filename != "")
 							{									
@@ -267,12 +267,29 @@ namespace mpcreate
 											}
 											else
 											{
-												Console.WriteLine("Please specify a question using the -q option");
+												//Console.WriteLine("Please specify a question using the -q option");
 											}
 										}
 									}
 								}
 							}
+							
+							
+							string map_filename = commandline.GetParameterValue("map", parameters);
+							if (map_filename != "")
+							{
+								Console.WriteLine("Saving map...");
+								ShowPlot(
+					                server_name,
+					                database_name, 
+					                user_name, 
+					                password,
+								    1000,
+								    map_filename,
+								    false);
+								Console.WriteLine("Saved " + map_filename);
+							}
+							
 						}
 					}
 				}			
@@ -952,7 +969,8 @@ namespace mpcreate
                     user_name,
                     password,
 		            1000,
-		            "mindpixels.bmp");
+		            "mindpixels.bmp",
+				    false);
 					
 				plot_ctr = 0;
 			}
@@ -1252,7 +1270,8 @@ namespace mpcreate
                     user_name,
                     password,
 		            1000,
-		            "mindpixels.bmp");
+		            "mindpixels.bmp",
+				    false);
 				
 				plot_ctr = 0;
 			}
@@ -1430,13 +1449,16 @@ namespace mpcreate
             string user_name,
             string password,
 		    int image_width,
-		    string filename)
+		    string filename,
+		    bool show_emotions)
         {
 			int radius = 5;
 			Bitmap bmp = new Bitmap(image_width, image_width, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
 			byte[] img = new byte[image_width * image_width * 3];
 			float[] coherence = new float[image_width * image_width];
+			float[] emotionmap = new float[image_width * image_width];
 			bool[] evidence = new bool[image_width * image_width];
+			bool[] evidence_emotion = new bool[image_width * image_width];
 			
             if ((server_name == "") ||
                 (server_name == null))
@@ -1448,8 +1470,8 @@ namespace mpcreate
                 + "uid=" + user_name + ";"
                 + "password=" + password + ";";
 			
-            string Query = "SELECT Hash,YesVotes,NoVotes FROM mindpixels ORDER BY Ngram3;";
-			ArrayList result_ngram3 = RunMySqlCommand(Query, connection_str, 3);
+            string Query = "SELECT Hash,YesVotes,NoVotes,Emotion FROM mindpixels ORDER BY Ngram3;";
+			ArrayList result_ngram3 = RunMySqlCommand(Query, connection_str, 4);
 
 			Query = "SELECT Hash FROM mindpixels ORDER BY Soundex;";
 			ArrayList result_ngram5 = RunMySqlCommand(Query, connection_str, 1);
@@ -1460,6 +1482,7 @@ namespace mpcreate
 				int[] hash1 = new int[result_ngram3.Count];
 				int[] hash2 = new int[result_ngram5.Count];
 				float[] pixelcoherence = new float[result_ngram3.Count];
+				float[] pixelemotion = new float[result_ngram3.Count];
 				
 				int max = result_ngram3.Count;
 				for (int i = 0; i < max; i++)
@@ -1468,9 +1491,11 @@ namespace mpcreate
 					string s0 = Convert.ToString(row[0]);
 					string s1 = Convert.ToString(row[1]);
 					string s2 = Convert.ToString(row[2]);
+					string s3 = Convert.ToString(row[3]);
 					int h1 = Convert.ToInt32(s0);
 					hash1[i] = h1;
 					pixelcoherence[i] = Convert.ToSingle(s1) / (Convert.ToSingle(s1)+Convert.ToSingle(s2));
+					pixelemotion[i] = Convert.ToSingle(s3);
 				}
 				for (int i = 0; i < max; i++)
 				{
@@ -1499,12 +1524,15 @@ namespace mpcreate
 									int dy = yy-y;
 									float dist = (float)Math.Sqrt(dx*dx + dy*dy);
 									float fraction = dist / (float)radius;
-									float incr = 0.5f + ((pixelcoherence[i]-0.5f) * Gaussian(fraction));
-									incr = LogOdds(incr);
 									
 								    int n = (yy * image_width) + xx;
-									coherence[n] += incr;
+									coherence[n] += LogOdds(0.5f + ((pixelcoherence[i]-0.5f) * Gaussian(fraction)));
 									evidence[n] = true;
+									if (pixelemotion[i] != 0)
+									{
+									    emotionmap[n] += pixelemotion[i] * Gaussian(fraction);
+									    evidence_emotion[n] = true;
+									}
 								}
 							}
 						}
@@ -1521,22 +1549,49 @@ namespace mpcreate
 			}
 			
 			int n2=0;
+			float prob;
 			for (int k = 0; k < img.Length; k+=3, n2++)
-			{				
-				float prob = LogOddsToProbability(coherence[n2]);
-				if (evidence[n2] == false) prob = 0.5f;
-				if (prob > 0.5f)
+			{	
+				if (!show_emotions)
 				{
-					int v = (int)((prob-0.5f) * 255*2);
-					if (v > 255) v = 255;
-				    img[k+1] = (byte)v;
+				    prob = LogOddsToProbability(coherence[n2]);
+					if (evidence[n2] == false) prob = 0.5f;
+					
+					if (prob > 0.5f)
+					{
+						int v = (int)((prob-0.5f) * 255*2);
+						if (v > 255) v = 255;
+					    img[k+1] = (byte)v;
+					}
+					else
+					{
+						int v = -(int)((prob-0.5f) * 255*2);
+						if (v > 255) v = 255;
+						img[k+2] = (byte)(v);
+						img[k] = (byte)(255-v);
+					}					
 				}
 				else
 				{
-					int v = -(int)((prob-0.5f) * 255*2);
-					if (v > 255) v = 255;
-					img[k+2] = (byte)(v);
-					img[k] = (byte)(255-v);
+					
+					if (evidence_emotion[n2])
+					{
+						prob = LogOddsToProbability(emotionmap[n2]);
+						
+						if (prob > 0.5f)
+						{
+							int v = (int)((prob-0.5f) * 800*2);
+							if (v > 255) v = 255;
+						    img[k+1] = (byte)v;
+						}
+						else
+						{
+							int v = -(int)((prob-0.5f) * 800*2);
+							if (v > 255) v = 255;
+							img[k+2] = (byte)v;
+						}
+						
+					}
 				}
 			}
 			
@@ -2162,6 +2217,7 @@ namespace mpcreate
 			ValidParameters.Add("cn");
 			ValidParameters.Add("load");
 			ValidParameters.Add("save");
+			ValidParameters.Add("map");
 			ValidParameters.Add("random");
 			ValidParameters.Add("userpixels");
             ValidParameters.Add("help");
@@ -2194,6 +2250,7 @@ namespace mpcreate
 			Console.WriteLine("         -db <mysql database name>");
             Console.WriteLine("         -load <mindpixel file>");
             Console.WriteLine("         -save <mindpixel file>");
+            Console.WriteLine("         -map <mindpixel map image file>");
             Console.WriteLine("         -random <filename>");
             Console.WriteLine("         -userpixels <filename>");
             Console.WriteLine("");

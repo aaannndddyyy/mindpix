@@ -78,7 +78,7 @@ namespace ca.guitard.jeff.utility {
 		
     public static string ToSoundexStandardised(string text, bool reverse) {
 		string standardised_index = "";
-		text = RemoveShortWords(text, 50);
+		text = RemoveShortWords(text, 40);
 		
 		List<string> snd = new List<string>();
 		string[] str = text.Trim().Split(' ');

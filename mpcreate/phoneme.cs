@@ -1178,7 +1178,7 @@ namespace mpcreate
 		    int n, 
 		    bool reverse)
 		{
-			text = RemoveShortWords(text, 50);
+			text = RemoveShortWords(text, 40);
 			string str = "";
 			List<string> ngram = new List<string>();
 			ngrams(text,n,ngram, true, true, reverse);
