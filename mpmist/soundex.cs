@@ -17,6 +17,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace ca.guitard.jeff.utility {
@@ -53,10 +54,52 @@ namespace ca.guitard.jeff.utility {
     private Soundex() {
     }
 
+	private static string RemoveShortWords(
+	    string text, 
+	    int minimum_percent)
+	{
+		string result = "";
+		
+		string[] str = text.Split(' ');
+		int average_length = 0;
+		for (int i = 0; i < str.Length; i++)
+		{
+			average_length += str[i].Length;
+		}
+		if (str.Length > 0) average_length /= str.Length;
+		average_length = average_length * 2 * minimum_percent / 100;
+		for (int i = 0; i < str.Length; i++)
+		{
+			if (str[i].Length > average_length)
+				result += str[i] + " ";
+		}			
+		return(result.Trim());
+	}
+		
+    public static string ToSoundexStandardised(string text, bool reverse) {
+		string standardised_index = "";
+		text = RemoveShortWords(text, 40);
+		
+		List<string> snd = new List<string>();
+		string[] str = text.Trim().Split(' ');
+		for (int i = 0; i < str.Length; i++)
+		{
+			if (str[i] != "")
+			{
+				snd.Add(ToSoundexCode(str[i]));
+			}
+		}
+		snd.Sort();
+		if (reverse) snd.Reverse();
+		for (int i = 0; i < snd.Count; i++)
+			standardised_index += snd[i];
+		return (standardised_index);
+	}
+		
     /// <summary>
     /// Return the soundex code for a given string.
     /// </summary>
-    public static String ToSoundexCode(String aString) {
+    public static string ToSoundexCode(string aString) {
 
       String word = aString.ToUpper();
       StringBuilder soundexCode = new StringBuilder();
@@ -93,7 +136,7 @@ namespace ca.guitard.jeff.utility {
     /// <summary>
     /// Transform the A-Z alphabetic characters to the appropriate soundex code.
     /// </summary>
-    private static String Transform(String aString) {
+    private static string Transform(string aString) {
       
       switch (aString) {
         case "A":

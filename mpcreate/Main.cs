@@ -153,8 +153,6 @@ namespace mpcreate
 					                password, 
 					                mp_table_name,
 					                users_table_name);
-								
-								SaveMindpixelPlot();
 							}
 							else
 							{
@@ -256,8 +254,6 @@ namespace mpcreate
 									                    users_fields_to_be_inserted,
 									                    users_field_type);
 													
-													SaveMindpixelPlot();
-													
 													Console.WriteLine("Mindpixel added");										
 												}
 												else
@@ -299,167 +295,8 @@ namespace mpcreate
 		
 		#region "generate image"
 		
-		static byte[] img_mindpixels;
-		static byte[] img_mindpixels2;
-		static int img_width = 1000;
-		static int plot_radius = 0;
-		static string plot_filename = "mindpixels.bmp";
-		static string plot_filename2 = "mindpixels2.bmp";
+		//static int img_width = 1000;
 		static int plot_ctr;
-
-		private static void SaveMindpixelPlot()
-		{
-			/*
-			if (img_mindpixels != null)
-			{
-				Bitmap bmp = new Bitmap(img_width, img_width, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-				BitmapArrayConversions.updatebitmap_unsafe(img_mindpixels, bmp);
-				bmp.Save(plot_filename, System.Drawing.Imaging.ImageFormat.Bmp);
-			}
-			if (img_mindpixels2 != null)
-			{
-				Bitmap bmp = new Bitmap(img_width, img_width, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-				BitmapArrayConversions.updatebitmap_unsafe(img_mindpixels2, bmp);
-				bmp.Save(plot_filename2, System.Drawing.Imaging.ImageFormat.Bmp);
-			}
-			*/
-		}
-		
-		/*
-		private static void PlotMindpixel(
-		    float ngram2, 
-		    float ngram3, 
-		    float ngram4,
-		    float ngram5,
-		    float ngram6,
-		    float ngram7,
-		    float emotion,
-		    float coherence,
-		    int plot_type)
-		{
-			Bitmap bmp = null;
-			
-			if (img_mindpixels == null)
-			{
-				img_mindpixels = new byte[img_width * img_width * 3];
-				for (int i = 0; i < img_mindpixels.Length; i++)
-					img_mindpixels[i] = 255;
-				
-				if (File.Exists(plot_filename))
-				{
-					bmp = (Bitmap)Bitmap.FromFile(plot_filename);
-					BitmapArrayConversions.updatebitmap(bmp, img_mindpixels);
-				}				
-			}
-
-			if (img_mindpixels2 == null)
-			{
-				img_mindpixels2 = new byte[img_width * img_width * 3];
-				for (int i = 0; i < img_mindpixels2.Length; i++)
-					img_mindpixels2[i] = 255;
-				
-				if (File.Exists(plot_filename2))
-				{
-					bmp = (Bitmap)Bitmap.FromFile(plot_filename2);
-					BitmapArrayConversions.updatebitmap(bmp, img_mindpixels2);
-				}				
-			}
-			
-			float tx, ty, bx, by;
-			int x,y,intensity_r,intensity_b;
-			
-			if (plot_type == 0)
-			{
-				tx = 0.0f;
-				ty = 0.0f;
-				bx = 1.0f;
-				by = 1.0f;
-				
-				emotion = 0.5f + (emotion * 0.5f);
-				
-				x = (int)((((ngram2 + ngram3 + ngram4)*0.33f) - tx) / (bx-tx) * img_width);
-				y = (int)((((ngram5 + ngram6 + ngram7)*0.33f) - ty) / (by-ty) * img_width);
-				intensity_r = 0;
-				intensity_b = 0;
-				
-				if (coherence > 0.5f) 
-				{
-					intensity_r = 255;
-				}			
-				if (coherence < 0.5f) 
-				{
-					intensity_b = 255;
-				}
-
-				for (int yy = y - plot_radius; yy <= y + plot_radius; yy++)
-				{
-					if ((yy > -1) && (yy < img_width))
-					{
-					    for (int xx = x - plot_radius; xx <= x + plot_radius; xx++)
-					    {
-							if ((xx > -1) && (xx < img_width))
-							{
-								int n = ((yy * img_width) + xx)*3;
-								img_mindpixels[n] = (byte)intensity_b;
-								img_mindpixels[n+1] = 0;
-								img_mindpixels[n+2] = (byte)intensity_r;
-							}
-						}
-					}
-				}
-				
-			}
-			else
-			{
-				tx = 0.0f;
-				ty = 0.0f;
-				bx = 1.0f;
-				by = 1.0f;
-				
-				emotion = 0.5f + (emotion * 0.5f);
-				
-				x = (int)((((ngram2 + ngram4 + ngram6)*0.33f)-tx) / (bx-tx) * img_width);
-				y = (int)((((ngram3 + ngram5 + ngram7)*0.33f)-ty) / (by-ty) * img_width);
-				intensity_r = 0;
-				intensity_b = 0;
-				
-				if (coherence > 0.5f) 
-				{
-					intensity_r = 255;
-				}			
-				if (coherence < 0.5f) 
-				{
-					intensity_b = 255;
-				}
-				
-				for (int yy = y - plot_radius; yy <= y + plot_radius; yy++)
-				{
-					if ((yy > -1) && (yy < img_width))
-					{
-					    for (int xx = x - plot_radius; xx <= x + plot_radius; xx++)
-					    {
-							if ((xx > -1) && (xx < img_width))
-							{
-								int n = ((yy * img_width) + xx)*3;
-								img_mindpixels2[n] = (byte)intensity_b;
-								img_mindpixels2[n+1] = 0;
-								img_mindpixels2[n+2] = (byte)intensity_r;
-							}
-						}
-					}
-				}
-				
-			}
-			
-			plot_ctr++;
-			if (plot_ctr > 10000)
-			{
-				SaveMindpixelPlot();
-				plot_ctr = 0;
-			}
-			
-		}
-		*/
 		
 		#endregion
 		
