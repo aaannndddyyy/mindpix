@@ -251,7 +251,7 @@ namespace mpcreate
 		};
 
 		
-		// formant frequency, radius and gain
+		// formant frequency, vocal tract radius and gain
 		static double[,,] phonemeParam =
 		{
 		    {    { 273, 0.996,  10},       // eee (beet)
@@ -1172,6 +1172,111 @@ namespace mpcreate
 			
 			return(result);
 		}
+
+		public static string ToNgramStandardised(
+		    string text, 
+		    int n, 
+		    bool reverse)
+		{
+			text = RemoveShortWords(text, 50);
+			string str = "";
+			List<string> ngram = new List<string>();
+			ngrams(text,n,ngram, true, true, reverse);
+			for (int i = 0; i < ngram.Count; i++)
+				str += ngram[i] + " ";
+			
+			return(str.Trim());
+		}
+				
+		private static string RemoveShortWords(
+		    string text, 
+		    int minimum_percent)
+		{
+			string result = "";
+			
+			string[] str = text.Split(' ');
+			int average_length = 0;
+			for (int i = 0; i < str.Length; i++)
+			{
+				average_length += str[i].Length;
+			}
+			if (str.Length > 0) average_length /= str.Length;
+			average_length = average_length * 2 * minimum_percent / 100;
+			for (int i = 0; i < str.Length; i++)
+			{
+				if (str[i].Length > average_length)
+					result += str[i] + " ";
+			}			
+			return(result.Trim());
+		}
+		
+		private static void ngrams(
+		    string text, int n,
+		    List<string> ngram,
+		    bool sort,
+		    bool no_duplicates,
+		    bool reverse)
+		{
+			ngram.Clear();
+			string[] buffer = new string[n];
+			int buffer_index = 0;
+			int ctr = 0;
+			
+			string phonemes = ConvertText(text);
+			char[] ch = phonemes.ToCharArray();
+			
+			for (int i = 0; i < ch.Length; i++)
+			{
+				string ph = "";
+				if ((ch[i] >= 'a') && (ch[i] <= 'z'))
+				{
+					ph += ch[i];
+				}
+				else
+				{
+					if ((ch[i] >= 'A') && (ch[i] <= 'Z'))
+					{
+						ph += ch[i];
+						ph += ch[i + 1];
+						i++;
+					}
+				}
+				
+				if (ph != "")
+				{
+					buffer[buffer_index++] = ph;
+					if (buffer_index >= n) buffer_index = 0;
+					if (ctr > 1)
+					{
+						int idx = buffer_index - n;
+						if (idx < 0) idx += n;
+						string ngram_str = "";
+						for (int j = 0; j < n; j++)
+						{
+						    ngram_str += buffer[idx];
+							if (j < n-1) ngram_str += "-";
+							idx++;
+							if (idx >= n) idx -= n;
+						}
+						if (!no_duplicates)
+						{
+						    ngram.Add(ngram_str);
+						}
+						else
+						{
+							if (!ngram.Contains(ngram_str))
+								ngram.Add(ngram_str);
+						}
+					}
+					ctr++;
+				}
+			}
+			if (sort)
+			{
+				ngram.Sort();
+				if (reverse) ngram.Reverse();
+			}
+		}	
 		
 		public static List<float> Formants(
 		    string text, 
@@ -1234,9 +1339,9 @@ namespace mpcreate
 									}
 									else
 									{
-										float divisor = 2;
+										float divisor = 1;
 										if (k == 0) divisor = 10000;
-										if (k == 2) divisor = 60;
+										if (k == 2) divisor = 30;
 										formants.Add((float)phonemeParam[idx,j,k] / divisor);
 									}
 								}
@@ -1381,7 +1486,7 @@ namespace mpcreate
 				    for (int k = 0; k < 3; k++, idx0++, idx1++)
 				    {
 						float diff = normalised[idx1] - normalised[idx0];
-						gain += diff;
+						if (k == 1) gain += diff;
 						tot += diff*diff;						
 					}
 				}

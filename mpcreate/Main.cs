@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Drawing;
 using System.Collections.Generic;
 using System.IO;
 using System.Collections;
@@ -46,9 +47,10 @@ namespace mpcreate
 			Console.WriteLine("diff = " + diff.ToString());
 			diff = phoneme.Difference("Cake", "Bake", 16, 20);
 			Console.WriteLine("diff = " + diff.ToString());
+			Console.WriteLine(phoneme.ToNgramStandardised("This is a test",3));
+			Console.WriteLine(Soundex.ToSoundexStandardised("This is a test"));
 			*/
-			
-			
+						
 			Console.WriteLine("mpcreate: A utility for creating mindpixels");
 			Console.WriteLine("Version 0.2");
 			
@@ -59,6 +61,7 @@ namespace mpcreate
             string password = "password";
             string mp_table_name = "mindpixels";
             string users_table_name = "users";
+			string threegrams_table_name = "threegrams";
 			
             string[] mp_fields = {
 				"Id", "BINARY(16) NOT NULL", // that's 16 bytes, not 16 bits!
@@ -67,7 +70,13 @@ namespace mpcreate
                 "YesVotes", "INT",
                 "NoVotes", "INT",
                 "Coherence", "FLOAT",
-				"Profile", "TEXT",
+				"Ngram2", "FLOAT",
+				"Ngram3", "FLOAT",
+				"Ngram4", "FLOAT",
+				"Ngram5", "FLOAT",
+				"Ngram6", "FLOAT",
+				"Soundex", "FLOAT",
+				"Emotion", "FLOAT"
             };
 
 			string[] users_fields = {
@@ -77,7 +86,7 @@ namespace mpcreate
                 "Question", "TEXT",
                 "Answer", "TINYINT"
             };
-									
+
             // the character used to indicate that what follows is a parameter name
             const string switch_character = "-";
 			
@@ -116,6 +125,8 @@ namespace mpcreate
 						}
 						else
 						{
+							CreateEmotionalWords();
+							
 							string server_name_str = commandline.GetParameterValue("server", parameters);
 							if (server_name_str != "") server_name = server_name_str;
 							
@@ -142,6 +153,8 @@ namespace mpcreate
 					                password, 
 					                mp_table_name,
 					                users_table_name);
+								
+								SaveMindpixelPlot();
 							}
 							else
 							{
@@ -243,6 +256,8 @@ namespace mpcreate
 									                    users_fields_to_be_inserted,
 									                    users_field_type);
 													
+													SaveMindpixelPlot();
+													
 													Console.WriteLine("Mindpixel added");										
 												}
 												else
@@ -260,9 +275,176 @@ namespace mpcreate
 							}
 						}
 					}
-				}
+				}			
 			}
+
 		}
+		
+		#region "generate image"
+		
+		static byte[] img_mindpixels;
+		static byte[] img_mindpixels2;
+		static int img_width = 1000;
+		static int plot_radius = 0;
+		static string plot_filename = "mindpixels.bmp";
+		static string plot_filename2 = "mindpixels2.bmp";
+		static int plot_ctr;
+
+		private static void SaveMindpixelPlot()
+		{
+			/*
+			if (img_mindpixels != null)
+			{
+				Bitmap bmp = new Bitmap(img_width, img_width, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+				BitmapArrayConversions.updatebitmap_unsafe(img_mindpixels, bmp);
+				bmp.Save(plot_filename, System.Drawing.Imaging.ImageFormat.Bmp);
+			}
+			if (img_mindpixels2 != null)
+			{
+				Bitmap bmp = new Bitmap(img_width, img_width, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+				BitmapArrayConversions.updatebitmap_unsafe(img_mindpixels2, bmp);
+				bmp.Save(plot_filename2, System.Drawing.Imaging.ImageFormat.Bmp);
+			}
+			*/
+		}
+		
+		/*
+		private static void PlotMindpixel(
+		    float ngram2, 
+		    float ngram3, 
+		    float ngram4,
+		    float ngram5,
+		    float ngram6,
+		    float ngram7,
+		    float emotion,
+		    float coherence,
+		    int plot_type)
+		{
+			Bitmap bmp = null;
+			
+			if (img_mindpixels == null)
+			{
+				img_mindpixels = new byte[img_width * img_width * 3];
+				for (int i = 0; i < img_mindpixels.Length; i++)
+					img_mindpixels[i] = 255;
+				
+				if (File.Exists(plot_filename))
+				{
+					bmp = (Bitmap)Bitmap.FromFile(plot_filename);
+					BitmapArrayConversions.updatebitmap(bmp, img_mindpixels);
+				}				
+			}
+
+			if (img_mindpixels2 == null)
+			{
+				img_mindpixels2 = new byte[img_width * img_width * 3];
+				for (int i = 0; i < img_mindpixels2.Length; i++)
+					img_mindpixels2[i] = 255;
+				
+				if (File.Exists(plot_filename2))
+				{
+					bmp = (Bitmap)Bitmap.FromFile(plot_filename2);
+					BitmapArrayConversions.updatebitmap(bmp, img_mindpixels2);
+				}				
+			}
+			
+			float tx, ty, bx, by;
+			int x,y,intensity_r,intensity_b;
+			
+			if (plot_type == 0)
+			{
+				tx = 0.0f;
+				ty = 0.0f;
+				bx = 1.0f;
+				by = 1.0f;
+				
+				emotion = 0.5f + (emotion * 0.5f);
+				
+				x = (int)((((ngram2 + ngram3 + ngram4)*0.33f) - tx) / (bx-tx) * img_width);
+				y = (int)((((ngram5 + ngram6 + ngram7)*0.33f) - ty) / (by-ty) * img_width);
+				intensity_r = 0;
+				intensity_b = 0;
+				
+				if (coherence > 0.5f) 
+				{
+					intensity_r = 255;
+				}			
+				if (coherence < 0.5f) 
+				{
+					intensity_b = 255;
+				}
+
+				for (int yy = y - plot_radius; yy <= y + plot_radius; yy++)
+				{
+					if ((yy > -1) && (yy < img_width))
+					{
+					    for (int xx = x - plot_radius; xx <= x + plot_radius; xx++)
+					    {
+							if ((xx > -1) && (xx < img_width))
+							{
+								int n = ((yy * img_width) + xx)*3;
+								img_mindpixels[n] = (byte)intensity_b;
+								img_mindpixels[n+1] = 0;
+								img_mindpixels[n+2] = (byte)intensity_r;
+							}
+						}
+					}
+				}
+				
+			}
+			else
+			{
+				tx = 0.0f;
+				ty = 0.0f;
+				bx = 1.0f;
+				by = 1.0f;
+				
+				emotion = 0.5f + (emotion * 0.5f);
+				
+				x = (int)((((ngram2 + ngram4 + ngram6)*0.33f)-tx) / (bx-tx) * img_width);
+				y = (int)((((ngram3 + ngram5 + ngram7)*0.33f)-ty) / (by-ty) * img_width);
+				intensity_r = 0;
+				intensity_b = 0;
+				
+				if (coherence > 0.5f) 
+				{
+					intensity_r = 255;
+				}			
+				if (coherence < 0.5f) 
+				{
+					intensity_b = 255;
+				}
+				
+				for (int yy = y - plot_radius; yy <= y + plot_radius; yy++)
+				{
+					if ((yy > -1) && (yy < img_width))
+					{
+					    for (int xx = x - plot_radius; xx <= x + plot_radius; xx++)
+					    {
+							if ((xx > -1) && (xx < img_width))
+							{
+								int n = ((yy * img_width) + xx)*3;
+								img_mindpixels2[n] = (byte)intensity_b;
+								img_mindpixels2[n+1] = 0;
+								img_mindpixels2[n+2] = (byte)intensity_r;
+							}
+						}
+					}
+				}
+				
+			}
+			
+			plot_ctr++;
+			if (plot_ctr > 10000)
+			{
+				SaveMindpixelPlot();
+				plot_ctr = 0;
+			}
+			
+		}
+		*/
+		
+		#endregion
 		
 		/// <summary>
 		/// Generates a hash code indicative of the text string
@@ -347,7 +529,9 @@ namespace mpcreate
 				}
 				if (table_name == "mindpixels")
 				{
-					Query += ",FULLTEXT INDEX (Profile)";
+					for (int g = 2; g <= 6; g++)
+					    Query += ",INDEX (Ngram" + g.ToString() + ")";
+					Query += ",INDEX (Soundex),INDEX (Emotion)";
 				}
 				Query += ")";
 
@@ -430,6 +614,300 @@ namespace mpcreate
 			return(rows);
 	    }
 		
+        static int[] emotional_word_rating;
+        static string[] emotional_words;
+		static int no_of_emotional_words;
+		
+		private static void addEmotionalWord(string word, int rating)
+		{
+			emotional_word_rating[no_of_emotional_words] = rating;
+			emotional_words[no_of_emotional_words] = word;
+			no_of_emotional_words++;
+		}
+		
+		private static void CreateEmotionalWords()
+		{	
+			emotional_word_rating = new int[300];
+			emotional_words = new string[300];
+			no_of_emotional_words = 0;
+			
+            //words associated with positive emotions
+            addEmotionalWord("love", 20);
+            addEmotionalWord("loved", 20);
+            addEmotionalWord("like", 2);
+            addEmotionalWord("enjoy", 5);
+            addEmotionalWord("pleasurable", 5);
+            addEmotionalWord("pleasure", 5);
+            addEmotionalWord("easy", 5);
+            addEmotionalWord("enjoys", 5);
+            addEmotionalWord("amused", 5);
+            addEmotionalWord("amusing", 5);
+            addEmotionalWord("entertained", 5);
+            addEmotionalWord("entertaining", 5);
+            addEmotionalWord("enjoyed", 5);
+            addEmotionalWord("treasure", 5);
+            addEmotionalWord("treasured", 5);
+            addEmotionalWord("pleasant", 5);
+            addEmotionalWord("joy", 5);
+            addEmotionalWord("happy", 5);
+            addEmotionalWord("good", 5);
+            addEmotionalWord("good at", 5);
+            addEmotionalWord("happiness", 5);
+            addEmotionalWord("popular", 5);
+            addEmotionalWord("esteem", 5);
+            addEmotionalWord("worthy", 5);
+            addEmotionalWord("worthwhile", 5);
+            addEmotionalWord("loving", 5);
+            addEmotionalWord("positive", 5);
+            addEmotionalWord("protect", 5);
+            addEmotionalWord("enjoyable", 10);
+            addEmotionalWord("exciting", 10);
+            addEmotionalWord("pleasing", 10);
+            addEmotionalWord("pleased", 10);
+            addEmotionalWord("encouraging", 5);
+            addEmotionalWord("encouraged", 5);
+            addEmotionalWord("encourage", 5);
+            addEmotionalWord("invest", 4);
+            addEmotionalWord("investment", 4);
+            addEmotionalWord("growth", 4);
+            addEmotionalWord("increase", 10);
+            addEmotionalWord("increased", 10);
+            addEmotionalWord("joyous", 10);
+            addEmotionalWord("tidy", 2);
+            addEmotionalWord("neat", 2);
+            addEmotionalWord("confident", 10);
+            addEmotionalWord("confidence", 10);
+            addEmotionalWord("peace", 10);
+            addEmotionalWord("peacefull", 10);
+            addEmotionalWord("calm", 10);
+            addEmotionalWord("bright", 10);
+            addEmotionalWord("rosy", 10);
+            addEmotionalWord("kindness", 10);
+            addEmotionalWord("goodness", 10);
+            addEmotionalWord("better", 2);
+            addEmotionalWord("welcome", 2);
+            addEmotionalWord("amusing", 2);
+            addEmotionalWord("lucky", 5);
+            addEmotionalWord("correct", 5);
+            addEmotionalWord("hired", 5);
+            addEmotionalWord("replenish", 5);
+            addEmotionalWord("respect", 5);
+            addEmotionalWord("respects", 5);
+            addEmotionalWord("respected", 5);
+            addEmotionalWord("working", 5);
+            addEmotionalWord("fascinate", 5);
+            addEmotionalWord("fascinated", 5);
+            addEmotionalWord("fascinating", 5);
+            addEmotionalWord("poetic", 5);
+            addEmotionalWord("interested", 5);
+            addEmotionalWord("interesting", 5);
+            addEmotionalWord("divine", 10);
+            addEmotionalWord("divinely", 10);
+            addEmotionalWord("fantastic", 10);
+            addEmotionalWord("fabulous", 10);
+            addEmotionalWord("funny", 10);
+            addEmotionalWord("initiative", 2);
+            addEmotionalWord("genuis", 5);
+            addEmotionalWord("freedom", 5);
+            addEmotionalWord("devoted", 10);
+            addEmotionalWord("refreshing", 10);
+            addEmotionalWord("refreshed", 10);
+            addEmotionalWord("enthusiast", 10);
+            addEmotionalWord("enthusiastic", 10);
+            addEmotionalWord("enthusiastically", 10);
+            addEmotionalWord("enthused", 10);
+            addEmotionalWord("enthusiasm", 10);
+            
+
+            //words associated with negative emotions
+            addEmotionalWord("hate", -10);
+            addEmotionalWord("hated", -10);
+            addEmotionalWord("never", -2);
+            addEmotionalWord("hates", -10);
+            addEmotionalWord("harm", -10);
+            addEmotionalWord("kill", -10);
+            addEmotionalWord("kills", -10);
+            addEmotionalWord("killed", -10);
+            addEmotionalWord("killing", -10);
+            addEmotionalWord("death", -10);
+            addEmotionalWord("grave", -10);
+            addEmotionalWord("victim", -10);
+            addEmotionalWord("stole", -5);
+            addEmotionalWord("steal", -5);
+            addEmotionalWord("stolen", -5);
+            addEmotionalWord("surrender", -1);
+            addEmotionalWord("killing", -10);
+            addEmotionalWord("offensive", -10);
+            addEmotionalWord("disslike", -5);
+            addEmotionalWord("frustrate", -5);
+            addEmotionalWord("frustration", -5);
+            addEmotionalWord("exclusion", -5);
+            addEmotionalWord("empty", -5);
+            addEmotionalWord("sad", -5);
+            addEmotionalWord("robbed", -8);
+            addEmotionalWord("crooked", -5);
+            addEmotionalWord("scam", -5);
+            addEmotionalWord("slave", -5);
+            addEmotionalWord("evil", -10);
+            addEmotionalWord("hysterical", -10);
+            addEmotionalWord("hysteria", -10);
+            addEmotionalWord("imposed", -5);
+            addEmotionalWord("violent", -5);
+            addEmotionalWord("violence", -5);
+            addEmotionalWord("shot", -10);
+            addEmotionalWord("genocide", -10);
+            addEmotionalWord("fighting", -5);
+            addEmotionalWord("paranoia", -5);
+            addEmotionalWord("paranoid", -5);
+            addEmotionalWord("propaganda", -5);
+            addEmotionalWord("fraud", -5);
+            addEmotionalWord("liar", -10);
+            addEmotionalWord("lies", -10);
+            addEmotionalWord("misslead", -1);
+            addEmotionalWord("lied", -10);
+            addEmotionalWord("hoax", -1);
+            addEmotionalWord("scary", -5);
+            addEmotionalWord("scared", -5);
+            addEmotionalWord("scare", -5);
+            addEmotionalWord("frightening", -10);
+            addEmotionalWord("frightened", -10);
+            addEmotionalWord("criticism", -5);
+            addEmotionalWord("criticise", -5);
+            addEmotionalWord("horror", -8);
+            addEmotionalWord("disturbing", -8);
+            addEmotionalWord("horrible", -8);
+            addEmotionalWord("criticised", -5);
+            addEmotionalWord("criticising", -5);
+            addEmotionalWord("spam", -10);
+            addEmotionalWord("damn", -10);
+            addEmotionalWord("darn", -10);
+            addEmotionalWord("fired", -5);
+            addEmotionalWord("sacked", -5);
+            addEmotionalWord("redundant", -5);
+            addEmotionalWord("bad", -10);
+            addEmotionalWord("too bad", -10);
+            addEmotionalWord("scream", -10);
+            addEmotionalWord("screamed", -10);
+            addEmotionalWord("screaming", -10);
+            addEmotionalWord("worse", -2);
+            addEmotionalWord("stumble", -2);
+            addEmotionalWord("stumbling", -2);
+            addEmotionalWord("frantic", -2);
+            addEmotionalWord("arrested", -10);
+            addEmotionalWord("worse than", -2);
+            addEmotionalWord("virus", -10);
+            addEmotionalWord("bomb", -10);
+            addEmotionalWord("boring", -10);
+            addEmotionalWord("dumb", -2);
+            addEmotionalWord("unnecessary", -2);
+            addEmotionalWord("unsophisticated", -2);
+            addEmotionalWord("fuck", -10);
+            addEmotionalWord("fucked", -10);
+            addEmotionalWord("shoot", -10);
+            addEmotionalWord("incorrect", -10);
+            addEmotionalWord("shot", -10);
+            addEmotionalWord("shooter", -10);
+            addEmotionalWord("messy", -2);
+            addEmotionalWord("untidy", -2);
+            addEmotionalWord("shooting", -10);
+            addEmotionalWord("fucker", -10);
+            addEmotionalWord("fucking", -10);
+            addEmotionalWord("shit", -10);
+            addEmotionalWord("bitch", -10);
+            addEmotionalWord("dont like", -10);
+            addEmotionalWord("bitchy", -10);
+            addEmotionalWord("bitching", -10);
+            addEmotionalWord("gun", -10);
+            addEmotionalWord("guns", -10);
+            addEmotionalWord("weapon", -10);
+            addEmotionalWord("weapons", -10);
+            addEmotionalWord("war", -10);
+            addEmotionalWord("rifle", -10);
+            addEmotionalWord("lonely", -10);
+            addEmotionalWord("loser", -10);
+            addEmotionalWord("invade", -10);
+            addEmotionalWord("invasion", -10);
+            addEmotionalWord("disease", -10);
+            addEmotionalWord("sick", -10);
+            addEmotionalWord("ill", -10);
+            addEmotionalWord("illness", -10);
+            addEmotionalWord("sickness", -10);
+            addEmotionalWord("jealous", -5);
+            addEmotionalWord("fear", -5);
+            addEmotionalWord("feared", -5);
+            addEmotionalWord("fearfull", -5);
+            addEmotionalWord("nowhere", -5);
+            addEmotionalWord("unpopular", -5);
+            addEmotionalWord("angry", -5);
+            addEmotionalWord("deluded", -5);
+            addEmotionalWord("delusion", -5);
+            addEmotionalWord("deserted", -5);
+            addEmotionalWord("worthless", -5);
+            addEmotionalWord("difficult", -2);
+            addEmotionalWord("hard", -2);
+            addEmotionalWord("trouble", -2);
+            addEmotionalWord("troublesome", -4);
+            addEmotionalWord("bicker", -5);
+            addEmotionalWord("argue", -5);
+            addEmotionalWord("decline", -5);
+            addEmotionalWord("reduce", -5);
+            addEmotionalWord("cut", -5);
+            addEmotionalWord("unlucky", -5);
+            addEmotionalWord("wrong", -5);
+            addEmotionalWord("go wrong", -5);
+            addEmotionalWord("gone wrong", -5);
+            addEmotionalWord("going wrong", -5);
+            addEmotionalWord("not working", -5);
+		}
+		
+		private static float GetEmotionRating(string text)
+		{
+			float rating = 0;
+			
+			text = text.ToLower();
+			for (int i = 0; i < no_of_emotional_words; i++)
+			{
+				if (text.Contains(emotional_words[i]))
+					rating += emotional_word_rating[i];
+			}
+			
+			rating /= 40.0f;
+			
+			return(rating);
+		}
+
+		private static float GetNgramIndex(string idx, int max_length)
+		{
+			double index = 0;
+			idx = idx.ToLower();
+			if (idx.Length > max_length)
+				idx = idx.Substring(0, max_length);
+			while (idx.Length < max_length)
+				idx += "0";
+			
+			char[] ch = idx.ToCharArray();
+			
+			double mult = 1.0/3600000000.0;
+			double max = 0;
+            for (int i = 0; i < ch.Length; i++) {
+				if (((ch[i] >= 'a') &&
+				     (ch[i] <= 'z')) ||
+				    ((ch[i] >= '0') &&
+				     (ch[i] <= '9')))
+				{
+					if (ch[i] <= '9')
+						index = 2*index + ((ch[i] - (int)'0' + 1)*mult);
+					else
+                        index = 2*index + ((ch[i] - (int)'a' + 11)*mult);
+					
+					max = 2*max + (36*mult);
+				}
+            }
+			index /= max;
+			//Console.WriteLine("index = " + index.ToString());
+			
+			return((float)index);
+		}
 		
         public static void InsertMindpixelIntoMySql(
 		    int hash,
@@ -446,9 +924,38 @@ namespace mpcreate
             if ((server_name == "") ||
                 (server_name == null))
                 server_name = "localhost";
+
+			float coherence = 0.0f;
+			if (answer == true) coherence = 1.0f;
 			
-			byte[] formants = phoneme.FormantsNormalisedSimple(question, 64);
-			string profile = phoneme.StringFromFormants(formants);
+			string index_ngram2 = phoneme.ToNgramStandardised(question, 2, false);
+			string index_ngram3 = phoneme.ToNgramStandardised(question, 3, false);
+			string index_ngram4 = phoneme.ToNgramStandardised(question, 4, false);
+			string index_ngram5 = phoneme.ToNgramStandardised(question, 5, false);
+			string index_ngram6 = phoneme.ToNgramStandardised(question, 6, false);
+			string index_soundex = Soundex.ToSoundexStandardised(question, false);
+
+			float coordinate_ngram2 = GetNgramIndex(index_ngram2, 80);
+			float coordinate_ngram3 = GetNgramIndex(index_ngram3, 80);
+			float coordinate_ngram4 = GetNgramIndex(index_ngram4, 80);
+			float coordinate_ngram5 = GetNgramIndex(index_ngram5, 80);
+			float coordinate_ngram6 = GetNgramIndex(index_ngram6, 80);
+			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
+			float coordinate_emotion = GetEmotionRating(question);
+			
+			plot_ctr++;
+			if (plot_ctr > 10000)
+			{
+                ShowPlot(
+                    server_name,
+                    database_name,
+                    user_name,
+                    password,
+		            1000,
+		            "mindpixels.bmp");
+					
+				plot_ctr = 0;
+			}
 						
 			string connection_str = 
                 "server=" + server_name + ";"
@@ -499,13 +1006,19 @@ namespace mpcreate
 						YesVotes++;
 					else
 						NoVotes++;
-					float coherence = YesVotes / (float)(YesVotes + NoVotes);
+					coherence = YesVotes / (float)(YesVotes + NoVotes);
 					
 				    Query = "UPDATE " + table_name + 
 						" SET YesVotes='" + YesVotes.ToString() + "'," +
 						" NoVotes='" + NoVotes.ToString() + "'," +
 						" Coherence='" + coherence.ToString() + "'," +
-					    " Profile='" + profile + "'" +
+					    " Ngram2='" + coordinate_ngram2.ToString() + "'," +
+					    " Ngram3='" + coordinate_ngram3.ToString() + "'," +
+					    " Ngram4='" + coordinate_ngram4.ToString() + "'," +
+					    " Ngram5='" + coordinate_ngram5.ToString() + "'," +
+					    " Ngram6='" + coordinate_ngram6.ToString() + "'," +
+					    " Soundex='" + coordinate_soundex.ToString() + "'," +
+					    " Emotion='" + coordinate_emotion.ToString() + "'" +
 					    " WHERE Id=CAST(?get_id as BINARY(16));";
 					
                     MySqlConnection connection = new MySqlConnection();
@@ -552,8 +1065,6 @@ namespace mpcreate
 	            List<string> field_name = new List<string>();
 	            List<string> field_value = new List<string>();
 				
-				float coherence;
-				
 				if (answer == true)
 				{
 					YesVotes = 1;
@@ -577,8 +1088,20 @@ namespace mpcreate
 				field_value.Add(NoVotes.ToString());				
 				field_name.Add("Coherence");
 				field_value.Add(coherence.ToString());
-			    field_name.Add("Profile");
-			    field_value.Add(profile);
+			    field_name.Add("Ngram2");
+			    field_value.Add(coordinate_ngram2.ToString());
+			    field_name.Add("Ngram3");
+			    field_value.Add(coordinate_ngram3.ToString());
+			    field_name.Add("Ngram4");
+			    field_value.Add(coordinate_ngram4.ToString());
+			    field_name.Add("Ngram5");
+			    field_value.Add(coordinate_ngram5.ToString());
+			    field_name.Add("Ngram6");
+			    field_value.Add(coordinate_ngram6.ToString());
+			    field_name.Add("Soundex");
+			    field_value.Add(coordinate_soundex.ToString());
+			    field_name.Add("Emotion");
+			    field_value.Add(coordinate_emotion.ToString());
 				
 				// add new pixel
 	            MySqlConnection connection = new MySqlConnection();
@@ -705,9 +1228,35 @@ namespace mpcreate
                 (server_name == null))
                 server_name = "localhost";
 			
-			byte[] formants = phoneme.FormantsNormalisedSimple(question, 64);
-			string profile = phoneme.StringFromFormants(formants);			
-						
+			string index_ngram2 = phoneme.ToNgramStandardised(question, 2, false);
+			string index_ngram3 = phoneme.ToNgramStandardised(question, 3, false);
+			string index_ngram4 = phoneme.ToNgramStandardised(question, 4, false);
+			string index_ngram5 = phoneme.ToNgramStandardised(question, 5, false);
+			string index_ngram6 = phoneme.ToNgramStandardised(question, 6, false);
+			string index_soundex = Soundex.ToSoundexStandardised(question, false);
+
+			float coordinate_ngram2 = GetNgramIndex(index_ngram2, 80);
+			float coordinate_ngram3 = GetNgramIndex(index_ngram3, 80);
+			float coordinate_ngram4 = GetNgramIndex(index_ngram4, 80);
+			float coordinate_ngram5 = GetNgramIndex(index_ngram5, 80);
+			float coordinate_ngram6 = GetNgramIndex(index_ngram6, 80);
+			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
+			float coordinate_emotion = GetEmotionRating(question);
+			
+			plot_ctr++;
+			if (plot_ctr > 10000)
+			{
+                ShowPlot(
+                    server_name,
+                    database_name,
+                    user_name,
+                    password,
+		            1000,
+		            "mindpixels.bmp");
+				
+				plot_ctr = 0;
+			}
+			
 			string connection_str = 
                 "server=" + server_name + ";"
                 + "database=" + database_name + ";"
@@ -744,8 +1293,20 @@ namespace mpcreate
 			field_value.Add(NoVotes.ToString());				
 			field_name.Add("Coherence");
 			field_value.Add(coherence.ToString());
-			field_name.Add("Profile");
-			field_value.Add(profile);
+			field_name.Add("Ngram2");
+			field_value.Add(coordinate_ngram2.ToString());
+			field_name.Add("Ngram3");
+			field_value.Add(coordinate_ngram3.ToString());
+			field_name.Add("Ngram4");
+			field_value.Add(coordinate_ngram4.ToString());
+			field_name.Add("Ngram5");
+			field_value.Add(coordinate_ngram5.ToString());
+			field_name.Add("Ngram6");
+			field_value.Add(coordinate_ngram6.ToString());
+			field_name.Add("Soundex");
+			field_value.Add(coordinate_soundex.ToString());
+			field_name.Add("Emotion");
+			field_value.Add(coordinate_emotion.ToString());
 			
 			// add new pixel
             MySqlConnection connection = new MySqlConnection();
@@ -832,6 +1393,159 @@ namespace mpcreate
                 Console.WriteLine(exception_str);
             }
         }
+		
+		/// <summary>
+        /// convert probability to log odds
+        /// </summary>
+        /// <param name="probability"></param>
+        /// <returns></returns>
+        private static float LogOdds(float probability)
+        {
+            if (probability > 0.999f) probability = 0.999f;
+            if (probability < 0.001f) probability = 0.001f;
+            return ((float)Math.Log10(probability / (1.0f - probability)));
+        }
+		
+        /// <summary>
+        /// convert a log odds value back into a probability value
+        /// </summary>
+        /// <param name="logodds"></param>
+        /// <returns></returns>
+        private static float LogOddsToProbability(float logodds)
+        {
+            return(1.0f - (1.0f/(1.0f + (float)Math.Exp(logodds))));
+        }		
+		
+        public static float Gaussian(float fraction)
+        {
+            fraction *= 3.0f;
+            float prob = (float)((1.0f / Math.Sqrt(2.0*Math.PI))*Math.Exp(-0.5*fraction*fraction));
+
+            return (prob*2.5f);
+        }
+				
+        private static void ShowPlot(
+            string server_name,
+            string database_name,
+            string user_name,
+            string password,
+		    int image_width,
+		    string filename)
+        {
+			int radius = 5;
+			Bitmap bmp = new Bitmap(image_width, image_width, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+			byte[] img = new byte[image_width * image_width * 3];
+			float[] coherence = new float[image_width * image_width];
+			bool[] evidence = new bool[image_width * image_width];
+			
+            if ((server_name == "") ||
+                (server_name == null))
+                server_name = "localhost";
+			
+			string connection_str = 
+                "server=" + server_name + ";"
+                + "database=" + database_name + ";"
+                + "uid=" + user_name + ";"
+                + "password=" + password + ";";
+			
+            string Query = "SELECT Hash,YesVotes,NoVotes FROM mindpixels ORDER BY Ngram3;";
+			ArrayList result_ngram3 = RunMySqlCommand(Query, connection_str, 3);
+
+			Query = "SELECT Hash FROM mindpixels ORDER BY Soundex;";
+			ArrayList result_ngram5 = RunMySqlCommand(Query, connection_str, 1);
+
+			if ((result_ngram3 != null) &&
+			    (result_ngram5 != null))
+			{
+				int[] hash1 = new int[result_ngram3.Count];
+				int[] hash2 = new int[result_ngram5.Count];
+				float[] pixelcoherence = new float[result_ngram3.Count];
+				
+				int max = result_ngram3.Count;
+				for (int i = 0; i < max; i++)
+				{
+					ArrayList row = (ArrayList)result_ngram3[i];
+					string s0 = Convert.ToString(row[0]);
+					string s1 = Convert.ToString(row[1]);
+					string s2 = Convert.ToString(row[2]);
+					int h1 = Convert.ToInt32(s0);
+					hash1[i] = h1;
+					pixelcoherence[i] = Convert.ToSingle(s1) / (Convert.ToSingle(s1)+Convert.ToSingle(s2));
+				}
+				for (int i = 0; i < max; i++)
+				{
+					ArrayList row = (ArrayList)result_ngram5[i];
+					string s0 = Convert.ToString(row[0]);
+					int h2 = Convert.ToInt32(s0);
+					hash2[i] = h2;
+				}
+				for (int i = 0; i < max; i++)
+				{				
+					int j = Array.IndexOf(hash2, hash1[i]);
+					if (j > -1)
+					{
+						int x = (int)(i * image_width / (float)max);
+						int y = (int)(j * image_width / (float)max);
+						
+						for (int yy = y - radius; yy <= y + radius; yy++)
+						{
+							
+						    for (int xx = x - radius; xx <= x + radius; xx++)
+						    {								
+								if ((xx > -1) && (xx < image_width) &&
+								    (yy > -1) && (yy < image_width))
+								{
+									int dx = xx-x;
+									int dy = yy-y;
+									float dist = (float)Math.Sqrt(dx*dx + dy*dy);
+									float fraction = dist / (float)radius;
+									float incr = 0.5f + ((pixelcoherence[i]-0.5f) * Gaussian(fraction));
+									incr = LogOdds(incr);
+									
+								    int n = (yy * image_width) + xx;
+									coherence[n] += incr;
+									evidence[n] = true;
+								}
+							}
+						}
+					}
+					else
+					{
+						Console.WriteLine(hash1[i].ToString() + " not found");
+					}
+				}
+			}
+			else
+			{
+				Console.WriteLine("No data");				
+			}
+			
+			int n2=0;
+			for (int k = 0; k < img.Length; k+=3, n2++)
+			{				
+				float prob = LogOddsToProbability(coherence[n2]);
+				if (evidence[n2] == false) prob = 0.5f;
+				if (prob > 0.5f)
+				{
+					int v = (int)((prob-0.5f) * 255*2);
+					if (v > 255) v = 255;
+				    img[k+1] = (byte)v;
+				}
+				else
+				{
+					int v = -(int)((prob-0.5f) * 255*2);
+					if (v > 255) v = 255;
+					img[k+2] = (byte)(v);
+					img[k] = (byte)(255-v);
+				}
+			}
+			
+			BitmapArrayConversions.updatebitmap_unsafe(img, bmp);
+			if (filename.EndsWith("bmp")) bmp.Save(filename, System.Drawing.Imaging.ImageFormat.Bmp);
+			if (filename.EndsWith("jpg")) bmp.Save(filename, System.Drawing.Imaging.ImageFormat.Jpeg);
+			if (filename.EndsWith("png")) bmp.Save(filename, System.Drawing.Imaging.ImageFormat.Png);
+			if (filename.EndsWith("gif")) bmp.Save(filename, System.Drawing.Imaging.ImageFormat.Gif);
+        }		
 		
         public static void InsertMindpixelUserDataIntoMySql(
 		    int hash,
