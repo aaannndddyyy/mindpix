@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace mpcreate
+namespace mpgac
 {	
 	public class phoneme
 	{

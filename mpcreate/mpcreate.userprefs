@@ -1,16 +1,17 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workbench ctype="Workbench">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Main.cs" ctype="Workbench">
     <Files>
       <File FileName="../../sentience/applications/fishfood/MersenneTwister.cs" Line="444" Column="1" />
       <File FileName="../mpmist/README.txt" Line="1" Column="1" />
-      <File FileName="Main.cs" Line="1441" Column="1" />
-      <File FileName="phoneme.cs" Line="1503" Column="1" />
-      <File FileName="soundex.cs" Line="183" Column="1" />
+      <File FileName="Main.cs" Line="55" Column="34" />
+      <File FileName="DEBIAN/control" Line="2" Column="13" />
+      <File FileName="AssemblyInfo.cs" Line="20" Column="32" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
           <Node name="mpcreate" expanded="True">
+            <Node name="DEBIAN" expanded="True" />
             <Node name="Main.cs" selected="True" />
           </Node>
         </State>

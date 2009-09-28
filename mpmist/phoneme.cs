@@ -1178,38 +1178,228 @@ namespace mpmist
 		    int n, 
 		    bool reverse)
 		{
-			text = RemoveShortWords(text, 40);
+			text = RemoveCommonWords(text);
 			string str = "";
 			List<string> ngram = new List<string>();
-			ngrams(text,n,ngram, true, true, reverse);
+			ngrams(text,n,ngram, true, false, reverse);
 			for (int i = 0; i < ngram.Count; i++)
 				str += ngram[i] + " ";
 			
 			return(str.Trim());
 		}
-				
-		private static string RemoveShortWords(
-		    string text, 
-		    int minimum_percent)
+
+	    static string[] common_words = {
+	        "a",
+	        "an",
+	        "am",
+	        "at",
+	        "to",
+	        "as",
+	        "we",
+	        "i",
+	        "in",
+	        "is",
+	        "it",
+	        "if",
+	        "be",
+	        "by",
+	        "so",
+	        "no",
+	        "last",
+	        "first",
+	        "on",
+	        "of",
+	        "its",
+	        "all",
+	        "can",
+	        "into",
+	        "from",
+	        "just",
+	        "and",
+	        "the",
+	        "over",
+	        "under",
+	        "for",
+	        "then",
+	        "dont",
+	        "has",
+	        "get",
+	        "got",
+	        "had",
+	        "should",
+	        "hadnt",
+	        "have",
+	        "some",
+	        "come",
+	        "this",
+	        "call",
+	        "that",
+	        "thats",
+	        "find",
+	        "these",
+	        "them",
+	        "look",
+	        "looked",
+	        "looks",
+	        "with",
+	        "but",
+	        "about",
+	        "where",
+	        "possible",
+	        "sometimes",
+	        "which",
+	        "they",
+	        "just",
+	        "we",
+	        "while",
+	        "whilst",
+	        "their",
+	        "perhaps",
+	        "you",
+	        "make",
+	        "any",
+	        "say",
+	        "been",
+	        "like",
+	        "form",
+	        "our",
+	        "give",
+	        "in the",
+	        "in a",
+	        "will",
+	        "object",
+	        "shall",
+	        "will not",
+	        "until",
+	        "take",
+	        "other",
+	        "now",
+	        "lead",
+	        "taken",
+	        "you can",
+	        "have to",
+	        "have some",
+	        "would",
+	        "said",
+	        "one",
+	        "how",
+	        "new",
+	        "we",
+	        "said",
+	        "it",
+	        "was",
+	        "are",
+	        "every",
+	        "such",
+	        "more",
+	        "different",
+	        "example",
+	        "way",
+	        "only",
+	        "often",
+	        "show",
+	        "group",
+	        "itself",
+	        "part",
+	        "saw",
+	        "making",
+	        "could",
+	        "need",
+	        "out",
+	        "being",
+	        "been",
+	        "yet",
+	        "lack",
+	        "even",
+	        "own",
+	        "much",
+	        "of this",
+	        "become",
+	        "keep",
+	        "keeps",
+	        "do",
+	        "having",
+	        "normal",
+	        "this",
+	        "after",
+	        "before",
+	        "during",
+	        "off",
+	        "use",
+	        "same",
+	        "case",
+	        "there",
+	        "through",
+	        "end",
+	        "may",
+	        "made",
+	        "name",
+	        "most",
+	        "many",
+	        "well",
+	        "who",
+	        "is",
+	        "your",
+	        "you",
+	        "owner",
+	        "around",
+	        "about",
+	        "of",
+	        "process",
+	        "too",
+	        "my",
+	        "why",
+	        "tell",
+	        "he",
+	        "she",
+	        "what",
+	        "left",
+	        "him",
+	        "her",
+	        "ever",
+	        "there"
+	    };
+			
+		private static string TextOnly(
+		    string text)
 		{
 			string result = "";
-			
-			string[] str = text.Split(' ');
-			int average_length = 0;
-			for (int i = 0; i < str.Length; i++)
+			char[] ch = text.ToCharArray();
+			for (int i = 0; i < text.Length; i++)
 			{
-				average_length += str[i].Length;
+				if (((ch[i] >= 'a') &&
+					(ch[i] <= 'z')) ||
+					((ch[i] >= 'A') &&
+					(ch[i] <= 'Z')) ||
+	                ((ch[i] >= '0') &&
+					(ch[i] <= '9')) ||
+	                (ch[i] == ' '))
+				result += ch[i];
 			}
-			if (str.Length > 0) average_length /= str.Length;
-			average_length = average_length * 2 * minimum_percent / 100;
+			return(result);
+		}
+			
+	    private static string RemoveCommonWords(
+	        string text)
+	    {
+			string result = "";
+			text = TextOnly(text);
+			text = text.ToLower();
+				
+			string[] str = text.Split(' ');
+			
 			for (int i = 0; i < str.Length; i++)
 			{
-				if (str[i].Length > average_length)
-					result += str[i] + " ";
-			}			
+				if (str[i] != "")
+				{
+					if (Array.IndexOf(common_words, str[i]) == -1)
+						result += str[i] + " ";
+				}
+			}
+				
 			return(result.Trim());
 		}
-		
+				
 		private static void ngrams(
 		    string text, int n,
 		    List<string> ngram,

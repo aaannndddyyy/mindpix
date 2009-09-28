@@ -34,7 +34,7 @@ namespace mpmist
 		public static void Main(string[] args)
 		{
 			Console.WriteLine("Minimum Intelligent Signal Test M.I.S.T.");
-			Console.WriteLine("Version 0.2");
+			Console.WriteLine("Version 0.3");
 			
             // default parameters for the database
             string server_name = "localhost";
@@ -653,7 +653,7 @@ namespace mpmist
 		    ref float[] coherence,
 		    ref int no_of_records)
         {
-			int radius = 5;
+			int radius = 3;
 			coherence = new float[image_width * image_width];
 			float[] emotionmap = new float[image_width * image_width];
 			bool[] evidence = new bool[image_width * image_width];
@@ -673,13 +673,13 @@ namespace mpmist
 			ArrayList result_ngram3 = RunMySqlCommand(Query, connection_str, 4);
 
 			Query = "SELECT Hash FROM mindpixels ORDER BY Soundex;";
-			ArrayList result_ngram5 = RunMySqlCommand(Query, connection_str, 1);
+			ArrayList result_soundex = RunMySqlCommand(Query, connection_str, 1);
 
 			if ((result_ngram3 != null) &&
-			    (result_ngram5 != null))
+			    (result_soundex != null))
 			{
 				int[] hash1 = new int[result_ngram3.Count];
-				int[] hash2 = new int[result_ngram5.Count];
+				int[] hash2 = new int[result_soundex.Count];
 				float[] pixelcoherence = new float[result_ngram3.Count];
 				float[] pixelemotion = new float[result_ngram3.Count];
 				
@@ -699,7 +699,7 @@ namespace mpmist
 				}
 				for (int i = 0; i < max; i++)
 				{
-					ArrayList row = (ArrayList)result_ngram5[i];
+					ArrayList row = (ArrayList)result_soundex[i];
 					string s0 = Convert.ToString(row[0]);
 					int h2 = Convert.ToInt32(s0);
 					hash2[i] = h2;

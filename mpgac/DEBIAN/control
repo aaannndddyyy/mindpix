@@ -1,0 +1,11 @@
+Package: mpgac
+Version: 0.3
+Architecture: i386
+Maintainer: Bob Mottram <fuzzgun@gmail.com>
+Depends: mono-runtime (>= 1.1.8.1), mono-2.0-runtime (>= 2.0)
+Recommends: 
+Suggests: 
+Section: ai
+Priority: optional
+Homepage: http://code.google.com/p/mindpix/
+Description: A minimally intelligent AGI, capable of answering yes or no commonsense questions (i.e. non-expert stuff).  This is a stand alone system which doesn't require the original GAC-80K corpus or a database.  Propositions are represented spatially as points within an image - hence the original use of the term "mindpixel" - and no keyword matching or natural language processing takes place as such.  This system is of course not very intelligent, and will answer many questions incorrectly, but it should perform better than chance - meaning that it's marginally more human-like than pure noise. For more information see http://code.google.com/p/mindpix/

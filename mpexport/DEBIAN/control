@@ -1,5 +1,5 @@
 Package: mpexport
-Version: 0.2
+Version: 0.3
 Architecture: i386
 Maintainer: Bob Mottram <fuzzgun@gmail.com>
 Depends: mono-runtime (>= 1.1.8.1), mono-2.0-runtime (>= 2.0)
@@ -8,4 +8,4 @@ Suggests:
 Section: programming
 Priority: optional
 Homepage: http://code.google.com/p/mindpix/
-Description: Utility for exporting mindpixel data to other systems.  Data can be exported in OpenCog (Scheme), POP and NARS formats.
+Description: Utility for exporting mindpixel data to other systems.  Data can be exported in OpenCog (Scheme), POP and NARS formats.  For more information see http://code.google.com/p/mindpix/
