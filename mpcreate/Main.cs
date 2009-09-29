@@ -76,6 +76,9 @@ namespace mpcreate
 				"Ngram5", "FLOAT",
 				"Ngram6", "FLOAT",
 				"Soundex", "FLOAT",
+				"NYSIIS", "FLOAT",
+				"MetaphonePrimary", "FLOAT",
+				"MetaphoneSecondary", "FLOAT",
 				"Emotion", "FLOAT"
             };
 
@@ -483,7 +486,7 @@ namespace mpcreate
 				{
 					for (int g = 2; g <= 6; g++)
 					    Query += ",INDEX (Ngram" + g.ToString() + ")";
-					Query += ",INDEX (Soundex),INDEX (Emotion)";
+					Query += ",INDEX (Soundex),INDEX (NYSIIS),INDEX (MetaphonePrimary),INDEX (MetaphoneSecondary),INDEX (Emotion)";
 				}
 				Query += ")";
 
@@ -886,6 +889,9 @@ namespace mpcreate
 			string index_ngram5 = phoneme.ToNgramStandardised(question, 5, false);
 			string index_ngram6 = phoneme.ToNgramStandardised(question, 6, false);
 			string index_soundex = Soundex.ToSoundexStandardised(question, false);
+			string index_metaphone_primary="", index_metaphone_secondary="";
+			Metaphone.ToMetaphoneStandardised(question, false, ref index_metaphone_primary, ref index_metaphone_secondary);
+			string index_nysiis = NYSIIS.ToNYSIISStandardised(question, false);
 
 			float coordinate_ngram2 = GetNgramIndex(index_ngram2, 80);
 			float coordinate_ngram3 = GetNgramIndex(index_ngram3, 80);
@@ -893,6 +899,9 @@ namespace mpcreate
 			float coordinate_ngram5 = GetNgramIndex(index_ngram5, 80);
 			float coordinate_ngram6 = GetNgramIndex(index_ngram6, 80);
 			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
+			float coordinate_nysiis = GetNgramIndex(index_nysiis, 80);
+			float coordinate_metaphone_primary = GetNgramIndex(index_metaphone_primary, 80);
+			float coordinate_metaphone_secondary = GetNgramIndex(index_metaphone_secondary, 80);
 			float coordinate_emotion = GetEmotionRating(question);
 			
 			plot_ctr++;
@@ -981,6 +990,9 @@ namespace mpcreate
 					    " Ngram5='" + coordinate_ngram5.ToString() + "'," +
 					    " Ngram6='" + coordinate_ngram6.ToString() + "'," +
 					    " Soundex='" + coordinate_soundex.ToString() + "'," +
+					    " NYSIIS='" + coordinate_nysiis.ToString() + "'," +
+					    " MetaphonePrimary='" + coordinate_metaphone_primary.ToString() + "'," +
+					    " MetaphoneSecondary='" + coordinate_metaphone_secondary.ToString() + "'," +
 					    " Emotion='" + coordinate_emotion.ToString() + "'" +
 					    " WHERE Id=CAST(?get_id as BINARY(16));";
 					
@@ -1063,6 +1075,12 @@ namespace mpcreate
 			    field_value.Add(coordinate_ngram6.ToString());
 			    field_name.Add("Soundex");
 			    field_value.Add(coordinate_soundex.ToString());
+			    field_name.Add("NYSIIS");
+			    field_value.Add(coordinate_nysiis.ToString());
+			    field_name.Add("MetaphonePrimary");
+			    field_value.Add(coordinate_metaphone_primary.ToString());
+			    field_name.Add("MetaphoneSecondary");
+			    field_value.Add(coordinate_metaphone_secondary.ToString());
 			    field_name.Add("Emotion");
 			    field_value.Add(coordinate_emotion.ToString());
 				
@@ -1197,6 +1215,9 @@ namespace mpcreate
 			string index_ngram5 = phoneme.ToNgramStandardised(question, 5, false);
 			string index_ngram6 = phoneme.ToNgramStandardised(question, 6, false);
 			string index_soundex = Soundex.ToSoundexStandardised(question, false);
+			string index_metaphone_primary="", index_metaphone_secondary="";
+			Metaphone.ToMetaphoneStandardised(question, false, ref index_metaphone_primary, ref index_metaphone_secondary);
+			string index_nysiis = NYSIIS.ToNYSIISStandardised(question, false);
 
 			float coordinate_ngram2 = GetNgramIndex(index_ngram2, 80);
 			float coordinate_ngram3 = GetNgramIndex(index_ngram3, 80);
@@ -1204,6 +1225,9 @@ namespace mpcreate
 			float coordinate_ngram5 = GetNgramIndex(index_ngram5, 80);
 			float coordinate_ngram6 = GetNgramIndex(index_ngram6, 80);
 			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
+			float coordinate_nysiis = GetNgramIndex(index_nysiis, 80);
+			float coordinate_metaphone_primary = GetNgramIndex(index_metaphone_primary, 80);
+			float coordinate_metaphone_secondary = GetNgramIndex(index_metaphone_secondary, 80);
 			float coordinate_emotion = GetEmotionRating(question);
 			
 			plot_ctr++;
@@ -1279,6 +1303,12 @@ namespace mpcreate
 			field_value.Add(coordinate_ngram6.ToString());
 			field_name.Add("Soundex");
 			field_value.Add(coordinate_soundex.ToString());
+			field_name.Add("NYSIIS");
+			field_value.Add(coordinate_nysiis.ToString());
+		    field_name.Add("MetaphonePrimary");
+		    field_value.Add(coordinate_metaphone_primary.ToString());
+		    field_name.Add("MetaphoneSecondary");
+		    field_value.Add(coordinate_metaphone_secondary.ToString());
 			field_name.Add("Emotion");
 			field_value.Add(coordinate_emotion.ToString());
 			
@@ -1418,12 +1448,15 @@ namespace mpcreate
 			coherence = new float[image_width * image_width];
 			bool[] occupied = new bool[image_width * image_width];
 			
-			float[,] dist_lookup = new float[radius*2+1,radius*2+1];
+			float[] fraction_lookup = new float[(radius*2+1)*(radius*2+1)];
+			int fctr = 0;
 			for (int i = -radius; i <= radius; i++)
 			{
-			    for (int j = -radius; j <= radius; j++)
+			    for (int j = -radius; j <= radius; j++, fctr++)
 			    {
-					dist_lookup[i+radius, j+radius] = (float)Math.Sqrt(i*i + j*j);
+					float dist = (float)Math.Sqrt(i*i + j*j);
+				    float fraction = dist / (float)radius;
+					fraction_lookup[fctr] = Gaussian(fraction);					
 				}
 			}
 			
@@ -1442,7 +1475,7 @@ namespace mpcreate
 
 			Query = "SELECT Hash,Soundex FROM mindpixels ORDER BY Soundex;";
 			ArrayList result_soundex = RunMySqlCommand(Query, connection_str, 2);
-
+			
 			if ((result_ngram3 != null) &&
 			    (result_soundex != null))
 			{
@@ -1483,27 +1516,26 @@ namespace mpcreate
 						int x = (int)(i * image_width / (float)max);
 						int y = (int)(j * image_width / (float)max);
 						
+						fctr = 0;
 						for (int yy = y - radius; yy <= y + radius; yy++)
 						{
-							if ((yy > -1) && (yy < image_width))
-							{
-								int dy = yy-y;
-							    for (int xx = x - radius; xx <= x + radius; xx++)
-							    {													
-									if ((xx > -1) && (xx < image_width))
-									{
-										int dx = xx-x;
-										
-										float dist = dist_lookup[dx+radius,dy+radius];
-										float fraction = dist / (float)radius;
-										
-									    int n = (yy * image_width) + xx;
-										coherence[n] += LogOdds(0.5f + ((pixelcoherence[i]-0.5f) * Gaussian(fraction)));
-										occupied[n] = true;
-									}
+							int dy = yy-y;
+						    for (int xx = x - radius; xx <= x + radius; xx++, fctr++)
+						    {													
+								if (((xx > -1) && (xx < image_width)) &&
+								    ((yy > -1) && (yy < image_width)))
+								{
+									int dx = xx-x;
+									
+								    int n = (yy * image_width) + xx;
+									float incr = LogOdds(0.5f + ((pixelcoherence[i]-0.5f) * fraction_lookup[fctr]));
+									coherence[n] += incr;
+									occupied[n] = true;
 								}
 							}
+							
 						}
+						
 					}
 					else
 					{

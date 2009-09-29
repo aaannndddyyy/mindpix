@@ -306,10 +306,14 @@ namespace mpmist
 			bool passed = false;
 			
 			string index_ngram3 = phoneme.ToNgramStandardised(question, 3, false);
+			string standardised_index_primary="", standardised_index_secondary="";
+			//Metaphone.ToMetaphoneStandardised(question, false, ref standardised_index_primary, ref standardised_index_secondary);
+			//string index_metaphone = standardised_index_primary;
 			string index_soundex = Soundex.ToSoundexStandardised(question, false);
 
 			float coordinate_ngram3 = GetNgramIndex(index_ngram3, 80);
 			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
+			//float coordinate_metaphone = GetNgramIndex(index_metaphone, 80);
 			
             if ((server_name == "") ||
                 (server_name == null))

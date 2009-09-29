@@ -1,22 +1,14 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workbench ActiveDocument="DEBIAN/control" ctype="Workbench">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Main.cs" ctype="Workbench">
     <Files>
-      <File FileName="../../sentience/applications/fishfood/MersenneTwister.cs" Line="444" Column="1" />
-      <File FileName="README.txt" Line="1" Column="1" />
-      <File FileName="Main.cs" Line="37" Column="34" />
-      <File FileName="AssemblyInfo.cs" Line="20" Column="32" />
-      <File FileName="DEBIAN/control" Line="1" Column="16" />
-      <File FileName="phoneme.cs" Line="24" Column="17" />
-      <File FileName="soundex.cs" Line="374" Column="1" />
-      <File FileName="commandline.cs" Line="1" Column="1" />
+      <File FileName="Main.cs" Line="319" Column="39" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
-          <Node name="mpmist" expanded="True">
-            <Node name="DEBIAN" expanded="True">
-              <Node name="control" selected="True" />
-            </Node>
+          <Node name="mpmist" expanded="True" selected="True">
+            <Node name="References" expanded="True" />
+            <Node name="DEBIAN" expanded="True" />
           </Node>
         </State>
       </Pad>
