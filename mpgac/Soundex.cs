@@ -71,6 +71,7 @@ namespace ca.guitard.jeff.utility {
         "by",
         "so",
         "no",
+		"than",
         "last",
         "first",
         "on",
@@ -154,6 +155,8 @@ namespace ca.guitard.jeff.utility {
         "said",
         "it",
         "was",
+		"does",
+		"did",
         "are",
         "every",
         "such",
@@ -266,20 +269,40 @@ namespace ca.guitard.jeff.utility {
 		return(result.Trim());
 	}
 		
-    public static string ToSoundexStandardised(string text, bool reverse) {
+    public static string ToSoundexStandardised(
+	    string text, 
+		bool reverse,
+		bool cooccurrence) 
+	{
 		string standardised_index = "";
 		text = TextOnly(text);
 		text = RemoveCommonWords(text);
 		
 		List<string> snd = new List<string>();
 		string[] str = text.Trim().Split(' ');
-		for (int i = 0; i < str.Length; i++)
+			
+		if (!cooccurrence)	
 		{
-			if (str[i] != "")
+			for (int i = 0; i < str.Length; i++)
 			{
-				snd.Add(ToSoundexCode(str[i]));
+				if (str[i] != "")
+				{
+					snd.Add(ToSoundexCode(str[i]));
+				}
 			}
 		}
+		else
+		{
+		    for (int i = 0; i < str.Length-1; i++)
+		    {
+				for (int j = i+1; j < str.Length; j++)
+			    if ((str[i] != "") && (str[j] != ""))
+			    {
+					snd.Add(ToSoundexCode(str[i] + str[j]));
+				}
+			}
+		}
+			
 		snd.Sort();
 		if (reverse) snd.Reverse();
 		for (int i = 0; i < snd.Count; i++)

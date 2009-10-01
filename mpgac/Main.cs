@@ -89,7 +89,7 @@ namespace mpgac
 						
 						string phoneme_index = phoneme.ToNgramStandardised(question, 3, false);
 						float coordinate_phoneme = GetNgramIndex(phoneme_index, 80);
-		                string index_soundex = Soundex.ToSoundexStandardised(question, false);
+		                string index_soundex = Soundex.ToSoundexStandardised(question, false, false);
 						float coordinate_soundex = GetNgramIndex(index_soundex, 80);
 						
 						int idx1 = 0;

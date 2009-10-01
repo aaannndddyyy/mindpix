@@ -61,7 +61,7 @@ namespace mpcreate
             string password = "password";
             string mp_table_name = "mindpixels";
             string users_table_name = "users";
-			string threegrams_table_name = "threegrams";
+			string soundex_table_name = "wordsoundex";
 			
             string[] mp_fields = {
 				"Id", "BINARY(16) NOT NULL", // that's 16 bytes, not 16 bits!
@@ -70,15 +70,12 @@ namespace mpcreate
                 "YesVotes", "INT",
                 "NoVotes", "INT",
                 "Coherence", "FLOAT",
-				"Ngram2", "FLOAT",
 				"Ngram3", "FLOAT",
-				"Ngram4", "FLOAT",
-				"Ngram5", "FLOAT",
-				"Ngram6", "FLOAT",
 				"Soundex", "FLOAT",
 				"NYSIIS", "FLOAT",
 				"MetaphonePrimary", "FLOAT",
 				"MetaphoneSecondary", "FLOAT",
+				"Connections", "FLOAT",
 				"Emotion", "FLOAT"
             };
 
@@ -90,6 +87,11 @@ namespace mpcreate
                 "Answer", "TINYINT"
             };
 
+			string[] soundex_fields = {
+				"SoundexHash", "INT",
+                "MindpixelHash", "INT",
+            };
+			
             // the character used to indicate that what follows is a parameter name
             const string switch_character = "-";
 			
@@ -144,18 +146,48 @@ namespace mpcreate
 														
 			                string load_filename = commandline.GetParameterValue("load", parameters);
 							if (load_filename != "")
-							{									
+							{
+								/*
+								List<string> word = new List<string>();
+								List<string> word_cooccurrence = new List<string>();
+								
+								loadGACWordFrequencies(
+					                server_name,
+					                database_name,
+					                user_name,
+					                password,
+								    load_filename, 
+								    "Mind Hack",
+								    word,
+									word_cooccurrence);
+								
+								Console.WriteLine(word.Count.ToString() + " words");
+								Console.WriteLine(word_cooccurrence.Count.ToString() + " word cooccurrences");
+								*/
+								
 							    loadGAC(
 					                load_filename, 
 			                        "Mind Hack",
 					                mp_fields,
 					                users_fields,
+								    soundex_fields,
 					                server_name,
 					                database_name, 
 					                user_name, 
 					                password, 
 					                mp_table_name,
-					                users_table_name);
+					                users_table_name,
+								    soundex_table_name);
+
+								/*
+								UpdateConnections(
+								    server_name,
+								    database_name,
+								    user_name,
+								    password,
+								    mp_table_name,
+									soundex_table_name);
+									*/
 							}
 							else
 							{
@@ -213,6 +245,14 @@ namespace mpcreate
 										                users_fields_to_be_inserted.Add(users_fields[i]);
 										                users_field_type.Add(users_fields[i + 1]);
 										            }
+
+													List<string> soundex_fields_to_be_inserted = new List<string>();
+										            List<string> soundex_field_type = new List<string>();
+										            for (int i = 0; i < soundex_fields.Length; i += 2)
+										            {
+										                soundex_fields_to_be_inserted.Add(soundex_fields[i]);
+										                soundex_field_type.Add(soundex_fields[i + 1]);
+										            }
 													
 										            // create tables if necessary
 										            CreateTable(
@@ -232,6 +272,27 @@ namespace mpcreate
 										                users_table_name,
 										                users_fields_to_be_inserted,
 										                users_field_type,-1,0,1);
+
+													
+													CreateTable(
+										                server_name,
+										                database_name,
+										                user_name,
+										                password,
+										                soundex_table_name,
+										                soundex_fields_to_be_inserted,
+										                soundex_field_type,-1,0,1);
+
+											        InsertWordsIntoMySql(
+													    question_hash,
+											            question,
+											            server_name,
+											            database_name,
+											            user_name,
+											            password,
+											            soundex_table_name,
+											            soundex_fields_to_be_inserted,
+											            soundex_field_type);
 													
 									                InsertMindpixelIntoMySql(
 													    question_hash,
@@ -257,7 +318,7 @@ namespace mpcreate
 									                    users_fields_to_be_inserted,
 									                    users_field_type);
 													
-													Console.WriteLine("Mindpixel added");										
+													Console.WriteLine("Mindpixel added");
 												}
 												else
 												{
@@ -484,12 +545,10 @@ namespace mpcreate
 				}
 				if (table_name == "mindpixels")
 				{
-					for (int g = 2; g <= 6; g++)
-					    Query += ",INDEX (Ngram" + g.ToString() + ")";
-					Query += ",INDEX (Soundex),INDEX (NYSIIS),INDEX (MetaphonePrimary),INDEX (MetaphoneSecondary),INDEX (Emotion)";
+					Query += ",INDEX (Ngram3),INDEX (Soundex),INDEX (Connections),INDEX (NYSIIS),INDEX (MetaphonePrimary),INDEX (MetaphoneSecondary),INDEX (Emotion)";
 				}
 				Query += ")";
-
+				
                 MySqlCommand addxml = new MySqlCommand(Query, connection);
 
                 //Console.WriteLine("Running query:");
@@ -883,21 +942,13 @@ namespace mpcreate
 			float coherence = 0.0f;
 			if (answer == true) coherence = 1.0f;
 			
-			string index_ngram2 = phoneme.ToNgramStandardised(question, 2, false);
 			string index_ngram3 = phoneme.ToNgramStandardised(question, 3, false);
-			string index_ngram4 = phoneme.ToNgramStandardised(question, 4, false);
-			string index_ngram5 = phoneme.ToNgramStandardised(question, 5, false);
-			string index_ngram6 = phoneme.ToNgramStandardised(question, 6, false);
-			string index_soundex = Soundex.ToSoundexStandardised(question, false);
+			string index_soundex = Soundex.ToSoundexStandardised(question, false, false);
 			string index_metaphone_primary="", index_metaphone_secondary="";
 			Metaphone.ToMetaphoneStandardised(question, false, ref index_metaphone_primary, ref index_metaphone_secondary);
 			string index_nysiis = NYSIIS.ToNYSIISStandardised(question, false);
 
-			float coordinate_ngram2 = GetNgramIndex(index_ngram2, 80);
 			float coordinate_ngram3 = GetNgramIndex(index_ngram3, 80);
-			float coordinate_ngram4 = GetNgramIndex(index_ngram4, 80);
-			float coordinate_ngram5 = GetNgramIndex(index_ngram5, 80);
-			float coordinate_ngram6 = GetNgramIndex(index_ngram6, 80);
 			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
 			float coordinate_nysiis = GetNgramIndex(index_nysiis, 80);
 			float coordinate_metaphone_primary = GetNgramIndex(index_metaphone_primary, 80);
@@ -984,11 +1035,7 @@ namespace mpcreate
 						" SET YesVotes='" + YesVotes.ToString() + "'," +
 						" NoVotes='" + NoVotes.ToString() + "'," +
 						" Coherence='" + coherence.ToString() + "'," +
-					    " Ngram2='" + coordinate_ngram2.ToString() + "'," +
 					    " Ngram3='" + coordinate_ngram3.ToString() + "'," +
-					    " Ngram4='" + coordinate_ngram4.ToString() + "'," +
-					    " Ngram5='" + coordinate_ngram5.ToString() + "'," +
-					    " Ngram6='" + coordinate_ngram6.ToString() + "'," +
 					    " Soundex='" + coordinate_soundex.ToString() + "'," +
 					    " NYSIIS='" + coordinate_nysiis.ToString() + "'," +
 					    " MetaphonePrimary='" + coordinate_metaphone_primary.ToString() + "'," +
@@ -1063,18 +1110,12 @@ namespace mpcreate
 				field_value.Add(NoVotes.ToString());				
 				field_name.Add("Coherence");
 				field_value.Add(coherence.ToString());
-			    field_name.Add("Ngram2");
-			    field_value.Add(coordinate_ngram2.ToString());
 			    field_name.Add("Ngram3");
 			    field_value.Add(coordinate_ngram3.ToString());
-			    field_name.Add("Ngram4");
-			    field_value.Add(coordinate_ngram4.ToString());
-			    field_name.Add("Ngram5");
-			    field_value.Add(coordinate_ngram5.ToString());
-			    field_name.Add("Ngram6");
-			    field_value.Add(coordinate_ngram6.ToString());
 			    field_name.Add("Soundex");
 			    field_value.Add(coordinate_soundex.ToString());
+			    field_name.Add("Connections");
+			    field_value.Add("0");
 			    field_name.Add("NYSIIS");
 			    field_value.Add(coordinate_nysiis.ToString());
 			    field_name.Add("MetaphonePrimary");
@@ -1176,6 +1217,273 @@ namespace mpcreate
 				
 			}
         }
+
+        public static void UpdateConnections(
+            string server_name,
+            string database_name,
+            string user_name,
+            string password,
+            string mp_table_name,
+		    string soundex_table_name)
+		{
+            if ((server_name == "") ||
+                (server_name == null))
+                server_name = "localhost";			
+						
+			string connection_str = 
+                "server=" + server_name + ";"
+                + "database=" + database_name + ";"
+                + "uid=" + user_name + ";"
+                + "password=" + password + ";";
+			
+			string Query = "SELECT Hash,Question FROM " + mp_table_name + ";";
+			ArrayList mps = RunMySqlCommand(Query, connection_str, 2);
+			for (int i = 0; i < mps.Count; i++)
+			{
+				ArrayList row = (ArrayList)mps[i];
+				int hash = Convert.ToInt32(Convert.ToString(row[0]));
+				string question = Convert.ToString(row[1]);
+				
+				UpdateConnections(
+				    hash,
+				    question,
+				    server_name,
+				    database_name,
+				    user_name,
+				    password,
+				    mp_table_name,
+					soundex_table_name);
+				Console.WriteLine(i.ToString());
+			}
+		}
+		
+        public static void UpdateConnections(
+		    int hash,
+            string question,
+            string server_name,
+            string database_name,
+            string user_name,
+            string password,
+            string mp_table_name,
+		    string soundex_table_name)
+        {
+            if ((server_name == "") ||
+                (server_name == null))
+                server_name = "localhost";			
+						
+			string connection_str = 
+                "server=" + server_name + ";"
+                + "database=" + database_name + ";"
+                + "uid=" + user_name + ";"
+                + "password=" + password + ";";
+			
+			string Query = "SELECT SoundexHash FROM " + soundex_table_name + " WHERE MindpixelHash = " + hash.ToString() + " GROUP BY SoundexHash;";
+			ArrayList soundex_hashes = RunMySqlCommand(Query, connection_str, 1);
+			if (soundex_hashes.Count > 0)
+			{
+				List<int> hashes = new List<int>();
+				for (int i = 0; i < soundex_hashes.Count; i++)
+				{
+					ArrayList row = (ArrayList)soundex_hashes[i];
+					string shash = Convert.ToString(row[0]);
+			        Query = "SELECT MindpixelHash FROM " + soundex_table_name + " WHERE SoundexHash = " + shash + " GROUP BY MindpixelHash;";
+			        ArrayList mindpixel_hashes = RunMySqlCommand(Query, connection_str, 1);
+					for (int j = 0; j < mindpixel_hashes.Count; j++)
+					{
+						ArrayList row2 = (ArrayList)mindpixel_hashes[j];
+						string mphash = Convert.ToString(row2[0]);
+						int mphash2 = Convert.ToInt32(mphash);
+						if (mphash2 != hash)
+						{
+							if (hashes.IndexOf(mphash2) == -1)
+								hashes.Add(mphash2);
+						}
+					}					
+				}
+				hashes.Sort();
+				string hashes_str = "";
+				for (int i = 0; i < hashes.Count; i++)
+				{
+					hashes_str += hashes[i] + " ";
+				}
+				hashes_str = hashes_str.Trim();
+				float hashes_index = GetNgramIndex(hashes_str.Trim(), 100);
+								
+				Query = "UPDATE " + mp_table_name + 
+						" SET Connections='" + hashes_index.ToString() + "'" +
+					    " WHERE Hash=" + hash.ToString() + ";";
+					
+                MySqlConnection connection = new MySqlConnection();
+
+                connection.ConnectionString = connection_str;
+
+                bool connected = false;
+                try
+                {
+                    connection.Open();
+                    connected = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+				    connection.Close();
+                }
+
+                if (connected)
+                {
+		            MySqlCommand update = new MySqlCommand(Query, connection);
+		
+	                try
+	                {
+	                    update.ExecuteNonQuery();
+	                }
+	                catch (Exception excp)
+	                {
+	                    Exception myExcp = new Exception("Could not update mindpixel. Error: " + excp.Message, excp);
+	                    throw (myExcp);
+	                }
+		
+	                connection.Close();					
+			    }	
+			}
+			
+        }
+				
+        public static void InsertWordsIntoMySql(
+		    int hash,
+            string question,
+            string server_name,
+            string database_name,
+            string user_name,
+            string password,
+            string table_name,
+            List<string> fields_to_be_inserted,
+            List<string> field_type)
+        {
+			
+            if ((server_name == "") ||
+                (server_name == null))
+                server_name = "localhost";
+
+			string connection_str = 
+                "server=" + server_name + ";"
+                + "database=" + database_name + ";"
+                + "uid=" + user_name + ";"
+                + "password=" + password + ";";
+			
+			string question_str = RemoveCommonWords(question);
+			string[] str2 = question_str.Split(' ');
+            List<string> field_name = new List<string>();
+            List<string> field_value = new List<string>();
+			
+			for (int wrd = 0; wrd < str2.Length; wrd++)
+			{
+				if (str2[wrd].Length > 2)
+				{
+					//Console.WriteLine(str2[wrd]);
+					int word_sound_hash = GetHashCode(Soundex.ToSoundexCode(str2[wrd]));
+
+		            field_name.Clear();
+		            field_value.Clear();
+					
+					field_name.Add("SoundexHash");
+					field_value.Add(word_sound_hash.ToString());
+					field_name.Add("MindpixelHash");
+					field_value.Add(hash.ToString());
+					
+					// add new pixel
+		            MySqlConnection connection = new MySqlConnection();
+					
+					connection.ConnectionString = connection_str;
+			
+		            bool connected = false;
+		            string exception_str = "";
+		            try
+		            {
+		                connection.Open();
+		                connected = true;
+		            }
+		            catch (Exception ex)
+		            {
+		                exception_str = ex.Message;
+						connection.Close();
+		            }
+		
+		            if (connected)
+		            {
+		                string Query = "INSERT INTO " + table_name + "(";
+		
+		                for (int i = 0; i < field_name.Count; i++)
+		                {
+		                    if ((fields_to_be_inserted.Count == 0) ||
+		                        (fields_to_be_inserted.Contains(field_name[i])))
+		                    {
+		                        Query += field_name[i];
+		                        if (i < field_name.Count - 1) Query += ",";
+		                    }
+		                }
+		                Query += ") values(";
+		                for (int i = 0; i < field_value.Count; i++)
+		                {
+		                    int idx = fields_to_be_inserted.IndexOf(field_name[i]);
+		
+		                    if ((fields_to_be_inserted.Count == 0) ||
+		                        (fields_to_be_inserted.Contains(field_name[i])))
+		                    {
+		                        if (fields_to_be_inserted.Count > 0)
+		                        {
+		                            if (idx > -1)
+		                            {
+										if (field_type[idx].Contains("BINARY"))
+										{
+											field_value[i] = "?Id";
+										}
+										
+		                                if (field_type[idx] == "DATETIME")
+		                                {
+		                                    DateTime d = DateTime.Parse(field_value[i]);
+		                                    string d_str = d.Year.ToString() + "-" + d.Month.ToString() + "-" + d.Day.ToString() + " " + d.Hour.ToString() + ":" + d.Minute.ToString() + ":" + d.Second.ToString();
+		                                    field_value[i] = d_str;
+		                                }
+		                            }
+		                        }
+		
+								if (!field_type[idx].Contains("BINARY"))
+		                            Query += "'" + field_value[i] + "'";
+								else
+									Query += field_value[i];
+		                        if (i < field_value.Count - 1) Query += ",";
+		                    }
+		                }
+		                Query += ")";
+								
+		                MySqlCommand addxml = new MySqlCommand(Query, connection);
+		
+		                //Console.WriteLine("Running insert query:");
+		                //Console.WriteLine(Query);
+		
+		                try
+		                {
+		                    addxml.ExecuteNonQuery();
+		                }
+		                catch (Exception excp)
+		                {
+		                    Exception myExcp = new Exception("Could not add new mindpixel. Error: " + excp.Message, excp);
+		                    throw (myExcp);
+		                }
+		
+		                connection.Close();
+		            }
+		            else
+		            {
+		                Console.WriteLine("InsertMindpixel: Couldn't connect to database " + database_name);
+		                Console.WriteLine(exception_str);
+		            }
+				
+				}
+			}
+			
+        }		
 		
 		private static int GCD(int a, int b)
 		{
@@ -1209,21 +1517,13 @@ namespace mpcreate
                 (server_name == null))
                 server_name = "localhost";
 			
-			string index_ngram2 = phoneme.ToNgramStandardised(question, 2, false);
 			string index_ngram3 = phoneme.ToNgramStandardised(question, 3, false);
-			string index_ngram4 = phoneme.ToNgramStandardised(question, 4, false);
-			string index_ngram5 = phoneme.ToNgramStandardised(question, 5, false);
-			string index_ngram6 = phoneme.ToNgramStandardised(question, 6, false);
-			string index_soundex = Soundex.ToSoundexStandardised(question, false);
+			string index_soundex = Soundex.ToSoundexStandardised(question, false, false);
 			string index_metaphone_primary="", index_metaphone_secondary="";
 			Metaphone.ToMetaphoneStandardised(question, false, ref index_metaphone_primary, ref index_metaphone_secondary);
 			string index_nysiis = NYSIIS.ToNYSIISStandardised(question, false);
 
-			float coordinate_ngram2 = GetNgramIndex(index_ngram2, 80);
 			float coordinate_ngram3 = GetNgramIndex(index_ngram3, 80);
-			float coordinate_ngram4 = GetNgramIndex(index_ngram4, 80);
-			float coordinate_ngram5 = GetNgramIndex(index_ngram5, 80);
-			float coordinate_ngram6 = GetNgramIndex(index_ngram6, 80);
 			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
 			float coordinate_nysiis = GetNgramIndex(index_nysiis, 80);
 			float coordinate_metaphone_primary = GetNgramIndex(index_metaphone_primary, 80);
@@ -1291,18 +1591,12 @@ namespace mpcreate
 			field_value.Add(NoVotes.ToString());				
 			field_name.Add("Coherence");
 			field_value.Add(coherence.ToString());
-			field_name.Add("Ngram2");
-			field_value.Add(coordinate_ngram2.ToString());
 			field_name.Add("Ngram3");
 			field_value.Add(coordinate_ngram3.ToString());
-			field_name.Add("Ngram4");
-			field_value.Add(coordinate_ngram4.ToString());
-			field_name.Add("Ngram5");
-			field_value.Add(coordinate_ngram5.ToString());
-			field_name.Add("Ngram6");
-			field_value.Add(coordinate_ngram6.ToString());
 			field_name.Add("Soundex");
 			field_value.Add(coordinate_soundex.ToString());
+		    field_name.Add("Connections");
+		    field_value.Add("0");
 			field_name.Add("NYSIIS");
 			field_value.Add(coordinate_nysiis.ToString());
 		    field_name.Add("MetaphonePrimary");
@@ -2064,12 +2358,14 @@ namespace mpcreate
             string initialstring,
 		    string[] mp_fields,
 		    string[] users_fields,
+		    string[] soundex_fields,
 		    string server_name,
 		    string database_name, 
 		    string user_name, 
 		    string password, 
 		    string mp_table_name,
-		    string users_table_name)
+		    string users_table_name,
+		    string soundex_table_name)
         {
             int no_of_records = NoOfRecords(
 		        server_name,
@@ -2095,98 +2391,609 @@ namespace mpcreate
 					Console.WriteLine(users_table_name + " table is not empty.  Please empty the table before loading");
 				}
 				else
-				{				
-		            bool filefound = true;
-		            string str, question;
-		            float coherence;
-					StreamReader oRead = null;
-					Random rnd = new Random();
-					
-		            List<string> mp_fields_to_be_inserted = new List<string>();
-		            List<string> mp_field_type = new List<string>();
-		            for (int i = 0; i < mp_fields.Length; i += 2)
-		            {
-		                mp_fields_to_be_inserted.Add(mp_fields[i]);
-		                mp_field_type.Add(mp_fields[i + 1]);
-		            }
-					
-		            try
-		            {
-		                oRead = File.OpenText(mindpixels_filename);
-		            }
-		            catch
-		            {
-		                filefound = false;
-		            }
-		
-		            if (filefound)
-		            {
-						Console.WriteLine("WARNING: This may take some time...");
-		                bool initialstringFound = false;
-						int i = 0;
-								
-			            while (!oRead.EndOfStream)
-			            {						
-			                str = oRead.ReadLine();
-			                if (!initialstringFound)
-			                {
-			                    /// look for an initial header string after which the data begins
-			                    if (str.Contains(initialstring)) initialstringFound = true;
-			                }
-			                else
-			                {
-			                    /// read the data
-			                    if (str != "")
-			                    {
-			                        try
-			                        {
-			                            coherence = Convert.ToSingle(ToNumeric(str.Substring(1, 4)));
-										if (coherence > 1) coherence = 1;
-			                            question = str.Substring(6);
-										int question_hash = GetHashCode(question);
-										
-										i++;
-										if (rnd.Next(2000) < 2) Console.WriteLine(i.ToString() + (char)9 + question);
-										
-							            InsertMindpixelWithCoherence(
-										    question_hash,
-							                question,
-							                coherence,
-							                server_name,
-							                database_name,
-							                user_name,
-							                password,
-							                mp_table_name,
-							                mp_fields_to_be_inserted,
-							                mp_field_type);								
-		
-			                        }
-			                        catch //(Exception ex)
-			                        {
-										//Console.WriteLine("str: " + str);
-										//Console.WriteLine("error: " + ex.Message);
-			                        }
-			                    }
-			                }
-			            }
-			            if (oRead.EndOfStream)
+				{									
+				    no_of_records = NoOfRecords(
+		                server_name,
+		                database_name, 
+		                user_name, 
+		                password, 
+		                soundex_table_name);
+			        if (no_of_records > 1)
+					{
+						Console.WriteLine(soundex_table_name + " table is not empty.  Please empty the table before loading");
+					}
+					else
+					{				
+			            bool filefound = true;
+			            string str, question;
+			            float coherence;
+						StreamReader oRead = null;
+						Random rnd = new Random();
+						
+			            List<string> mp_fields_to_be_inserted = new List<string>();
+			            List<string> mp_field_type = new List<string>();
+			            for (int i = 0; i < mp_fields.Length; i += 2)
 			            {
-			                oRead.Close();
+			                mp_fields_to_be_inserted.Add(mp_fields[i]);
+			                mp_field_type.Add(mp_fields[i + 1]);
+			            }
+	
+						List<string> soundex_fields_to_be_inserted = new List<string>();
+			            List<string> soundex_field_type = new List<string>();
+			            for (int i = 0; i < soundex_fields.Length; i += 2)
+			            {
+			                soundex_fields_to_be_inserted.Add(soundex_fields[i]);
+			                soundex_field_type.Add(soundex_fields[i + 1]);
 			            }
 						
-	                    no_of_records = NoOfRecords(
-			                server_name,
-			                database_name, 
-			                user_name, 
-			                password, 
-			                mp_table_name);	
-						
-						Console.WriteLine(no_of_records.ToString() + " records loaded");
+			            try
+			            {
+			                oRead = File.OpenText(mindpixels_filename);
+			            }
+			            catch
+			            {
+			                filefound = false;
+			            }
+			
+			            if (filefound)
+			            {
+							Console.WriteLine("WARNING: This may take some time...");
+			                bool initialstringFound = false;
+							int i = 0;
+									
+				            while ((!oRead.EndOfStream) && (i < 100000))
+				            {						
+				                str = oRead.ReadLine();
+				                if (!initialstringFound)
+				                {
+				                    /// look for an initial header string after which the data begins
+				                    if (str.Contains(initialstring)) initialstringFound = true;
+				                }
+				                else
+				                {
+				                    /// read the data
+				                    if (str != "")
+				                    {
+				                        try
+				                        {
+				                            coherence = Convert.ToSingle(ToNumeric(str.Substring(1, 4)));
+											if (coherence > 1) coherence = 1;
+				                            question = str.Substring(6);
+											int question_hash = GetHashCode(question);
+											
+											i++;
+											if (rnd.Next(2000) < 2) Console.WriteLine(i.ToString() + (char)9 + question);
+											
+									        InsertWordsIntoMySql(
+											    question_hash,
+									            question,
+									            server_name,
+									            database_name,
+									            user_name,
+									            password,
+									            soundex_table_name,
+									            soundex_fields_to_be_inserted,
+									            soundex_field_type);
+											
+								            InsertMindpixelWithCoherence(
+											    question_hash,
+								                question,
+								                coherence,
+								                server_name,
+								                database_name,
+								                user_name,
+								                password,
+								                mp_table_name,
+								                mp_fields_to_be_inserted,
+								                mp_field_type);								
+			
+				                        }
+				                        catch //(Exception ex)
+				                        {
+											//Console.WriteLine("str: " + str);
+											//Console.WriteLine("error: " + ex.Message);
+				                        }
+				                    }
+				                }
+				            }
+				            if (oRead.EndOfStream)
+				            {
+				                oRead.Close();
+				            }
+							
+		                    no_of_records = NoOfRecords(
+				                server_name,
+				                database_name, 
+				                user_name, 
+				                password, 
+				                mp_table_name);	
+							
+							Console.WriteLine(no_of_records.ToString() + " records loaded");
+						}
 					}
 				}
 			}
         }
 
+	    static string[] common_words = {
+	        "a",
+	        "an",
+	        "am",
+	        "at",
+	        "to",
+	        "as",
+	        "we",
+	        "i",
+	        "in",
+	        "is",
+	        "it",
+	        "if",
+	        "be",
+	        "by",
+	        "so",
+			"than",
+			"does",
+			"did",
+	        "no",
+	        "last",
+	        "first",
+	        "on",
+	        "of",
+	        "its",
+	        "all",
+	        "can",
+	        "into",
+	        "from",
+	        "just",
+	        "and",
+	        "the",
+	        "over",
+	        "under",
+	        "for",
+	        "then",
+	        "dont",
+	        "has",
+	        "get",
+	        "got",
+	        "had",
+	        "should",
+	        "hadnt",
+	        "have",
+	        "some",
+	        "come",
+	        "this",
+	        "call",
+	        "that",
+	        "thats",
+	        "find",
+	        "these",
+	        "them",
+	        "look",
+	        "looked",
+	        "looks",
+	        "with",
+	        "but",
+	        "about",
+	        "where",
+	        "possible",
+	        "sometimes",
+	        "which",
+	        "they",
+	        "just",
+	        "we",
+	        "while",
+	        "whilst",
+	        "their",
+	        "perhaps",
+	        "you",
+	        "make",
+	        "any",
+	        "say",
+	        "been",
+	        "like",
+	        "form",
+	        "our",
+	        "give",
+	        "in the",
+	        "in a",
+	        "will",
+	        "object",
+	        "shall",
+	        "will not",
+	        "until",
+	        "take",
+	        "other",
+	        "now",
+	        "lead",
+	        "taken",
+	        "you can",
+	        "have to",
+	        "have some",
+	        "would",
+	        "said",
+	        "one",
+	        "how",
+	        "new",
+	        "we",
+	        "said",
+	        "it",
+	        "was",
+	        "are",
+	        "every",
+	        "such",
+	        "more",
+	        "different",
+	        "example",
+	        "way",
+	        "only",
+	        "often",
+	        "show",
+	        "group",
+	        "itself",
+	        "part",
+	        "saw",
+	        "making",
+	        "could",
+	        "need",
+	        "out",
+	        "being",
+	        "been",
+	        "yet",
+	        "lack",
+	        "even",
+	        "own",
+	        "much",
+	        "of this",
+	        "become",
+	        "keep",
+	        "keeps",
+	        "do",
+	        "having",
+	        "normal",
+	        "this",
+	        "after",
+	        "before",
+	        "during",
+	        "off",
+	        "use",
+	        "same",
+	        "case",
+	        "there",
+	        "through",
+	        "end",
+	        "may",
+	        "made",
+	        "name",
+	        "most",
+	        "many",
+	        "well",
+	        "who",
+	        "is",
+	        "your",
+	        "you",
+	        "owner",
+	        "around",
+	        "about",
+	        "of",
+	        "process",
+	        "too",
+	        "my",
+	        "why",
+	        "tell",
+	        "he",
+	        "she",
+	        "what",
+	        "left",
+	        "him",
+	        "her",
+	        "ever",
+	        "there"
+	    };
+			
+		private static string TextOnly(
+		    string text)
+		{
+			string result = "";
+			char[] ch = text.ToCharArray();
+			for (int i = 0; i < text.Length; i++)
+			{
+				if (((ch[i] >= 'a') &&
+					(ch[i] <= 'z')) ||
+					((ch[i] >= 'A') &&
+					(ch[i] <= 'Z')) ||
+	                ((ch[i] >= '0') &&
+					(ch[i] <= '9')) ||
+	                (ch[i] == ' '))
+				result += ch[i];
+			}
+			return(result);
+		}
+			
+	    private static string RemoveCommonWords(
+	        string text)
+	    {
+			string result = "";
+			text = TextOnly(text);
+			text = text.ToLower();
+				
+			string[] str = text.Split(' ');
+			
+			for (int i = 0; i < str.Length; i++)
+			{
+				if (str[i] != "")
+				{
+					if (Array.IndexOf(common_words, str[i]) == -1)
+						result += str[i] + " ";
+				}
+			}
+				
+			return(result.Trim());
+		}
+		
+		static void UpdateWordStatistics(
+		    string question, 
+		    float coherence,
+		    List<string>[] word, 
+		    List<int>[] word_frequency, 
+		    List<string>[] word_cooccurrence, 
+		    List<int>[] word_cooccurrence_frequency,
+		    List<float>[] word_cooccurrence_coherence)
+		{
+		    //question = RemoveCommonWords(question.ToLower());
+			question = TextOnly(question.ToLower());
+			string[] str = question.Split(' ');
+			for (int i = 0; i < str.Length; i++)
+			{
+				if (str[i].Length > 1)
+				{
+					char[] ch = str[i].ToCharArray();
+					int word_index0 = ch[0];
+					int word_index1 = ch[1];
+					if ((ch[0] >= 'a') && (ch[0] <= 'z'))
+						word_index0 -= (int)'a';
+					else
+						word_index0 -= (int)'0' + 26;
+					if ((ch[1] >= 'a') && (ch[1] <= 'z'))
+						word_index1 -= (int)'a';
+					else
+						word_index1 -= (int)'0' + 26;
+					//Console.WriteLine(word_index0.ToString());
+					//Console.WriteLine(word_index1.ToString());
+					int word_index = word_index0*36+word_index1;
+					
+					//Console.WriteLine(str[i]);
+					int pos = word[word_index].IndexOf(str[i]);
+					if (pos == -1)
+					{
+						word[word_index].Add(str[i]);
+						word_frequency[word_index].Add((int)1);
+					}
+					else
+					{
+						word_frequency[word_index][pos]++;
+					}
+					
+					for (int j = i+1; j < str.Length; j++)
+					{
+						if (str[j].Length > 1)
+						{
+							char[] ch2 = str[j].ToCharArray();
+							int word_index2 = ch2[0];
+							if ((ch2[0] >= 'a') && (ch2[0] <= 'z'))
+								word_index2 -= (int)'a';
+							else
+								word_index2 -= (int)'0' + 26;
+							int word_index3 = ch2[1];
+							if ((ch2[1] >= 'a') && (ch2[1] <= 'z'))
+								word_index3 -= (int)'a';
+							else
+								word_index3 -= (int)'0' + 26;
+							int word_index_co = (word_index0*36*36*36)+(word_index1*36*36)+(word_index2*36)+word_index3;
+							
+							string costr = "";
+							if (j > i+1) 
+							{
+								costr = str[i]+"_#_"+str[j];
+							}
+							else
+							{
+								costr = str[i] + "_" + str[j];
+							}
+								
+							pos = word_cooccurrence[word_index_co].IndexOf(costr);
+							if (pos == -1)
+							{
+								word_cooccurrence[word_index_co].Add(costr);
+								word_cooccurrence_frequency[word_index_co].Add((int)1);
+								word_cooccurrence_coherence[word_index_co].Add(LogOdds(0.0f));
+							}
+							else
+							{
+								word_cooccurrence_frequency[word_index_co][pos]++;
+								word_cooccurrence_coherence[word_index_co][pos]+= LogOdds(coherence);
+							}
+						}
+					}
+					
+				}
+			}
+		}
+		
+        static void loadGACWordFrequencies(
+            string server_name,
+            string database_name,
+            string user_name,
+            string password,
+		    string mindpixels_filename, 
+            string initialstring,
+		    List<string> word,
+		    List<string> word_cooccurrence)
+        {
+            bool filefound = true;
+            string str, question;
+            float coherence;
+			StreamReader oRead = null;
+			Random rnd = new Random();
+			
+			int index_max = 36*36;
+			int index_max2 = 36*36*36*36;
+		    List<string>[] iword = new List<string>[index_max];
+			List<int>[] iword_frequency = new List<int>[index_max];
+		    List<string>[] iword_cooccurrence = new List<string>[index_max2];
+			List<int>[] iword_cooccurrence_frequency = new List<int>[index_max2];
+			List<float>[] iword_cooccurrence_coherence = new List<float>[index_max2];
+			for (int n = 0; n < index_max; n++)
+			{
+				iword[n] = new List<string>();
+				iword_frequency[n] = new List<int>();
+			}
+			for (int n = 0; n < index_max2; n++)
+			{
+				iword_cooccurrence[n] = new List<string>();
+				iword_cooccurrence_frequency[n] = new List<int>();
+				iword_cooccurrence_coherence[n] = new List<float>();
+			}
+			
+            try
+            {
+                oRead = File.OpenText(mindpixels_filename);
+            }
+            catch
+            {
+                filefound = false;
+            }
+
+            if (filefound)
+            {
+				Console.WriteLine("WARNING: This may take some time...");
+                bool initialstringFound = false;
+				int i = 0;
+						
+	            while ((!oRead.EndOfStream) && (i <= 80000))
+	            {						
+	                str = oRead.ReadLine();
+	                if (!initialstringFound)
+	                {
+	                    /// look for an initial header string after which the data begins
+	                    if (str.Contains(initialstring)) initialstringFound = true;
+	                }
+	                else
+	                {
+	                    /// read the data
+	                    if (str != "")
+	                    {
+	                        try
+	                        {
+	                            coherence = Convert.ToSingle(ToNumeric(str.Substring(1, 4)));
+								if (coherence > 1) coherence = 1;
+	                            question = str.Substring(6);
+								
+								UpdateWordStatistics(question, coherence, iword, iword_frequency, iword_cooccurrence, iword_cooccurrence_frequency, iword_cooccurrence_coherence);
+								if (i % 1000 == 0) Console.WriteLine(i.ToString());
+								i++;
+	                        }
+	                        catch //(Exception ex)
+	                        {
+								//Console.WriteLine("str: " + str);
+								//Console.WriteLine("error: " + ex.Message);
+	                        }
+	                    }
+	                }
+	            }
+	            if (oRead.EndOfStream)
+	            {
+	                oRead.Close();
+	            }						
+			}
+
+			Console.WriteLine("Updating words");
+			int max_frequency = 0;
+			for (int i = 0; i < index_max; i++)
+			{								
+				for (int j = 0; j < iword[i].Count; j++)
+				{
+					string s = iword_frequency[i][j].ToString();
+					while (s.Length < 6) s = "0" + s;
+					s += " " + iword[i][j];
+					word.Add(s);
+				}
+			}
+			word.Sort();
+			word.Reverse();
+			
+			Console.WriteLine("Updating cooccurrence");
+
+			float max_frequency2 = 0.0001f;
+			for (int i = 0; i < index_max2; i++)
+			{
+				for (int j = 0; j < iword_cooccurrence[i].Count; j++)
+				{
+					if (iword_cooccurrence_frequency[i][j] > max_frequency2)
+						max_frequency2 = iword_cooccurrence_frequency[i][j];
+				}
+			}
+			
+			for (int i = 0; i < index_max2; i++)
+			{
+				for (int j = 0; j < iword_cooccurrence[i].Count; j++)
+				{
+					string s = ((int)(iword_cooccurrence_frequency[i][j]*1000/max_frequency2)/1000.0f).ToString();
+					if (s.Length==1) s += ".";
+					while (s.Length < 5) s += "0";					
+					float coh = (int)(LogOddsToProbability(iword_cooccurrence_coherence[i][j])*1000)/1000.0f;
+					string coherence_str = Convert.ToString(coh);
+					if (coherence_str.Length == 1) coherence_str += ".";
+					while (coherence_str.Length < 5) coherence_str += "0";
+					s += " " + coherence_str;
+					s += " " + iword_cooccurrence[i][j];
+					word_cooccurrence.Add(s);
+				}
+			}
+			word_cooccurrence.Sort();
+			word_cooccurrence.Reverse();
+			
+			Console.WriteLine("Saving");
+			StreamWriter oWrite = null;
+			filefound = true;			
+            try
+            {
+                oWrite = File.CreateText("mindpixels_word_frequencies.txt");
+            }
+            catch
+            {
+                filefound = false;
+            }
+			
+			if (filefound)
+			{
+				for (int i = 0; i < word.Count; i++)
+				{
+					oWrite.WriteLine(word[i]);
+				}
+				oWrite.Close();
+			}
+			
+			filefound = true;			
+            try
+            {
+                oWrite = File.CreateText("mindpixels_word_cooccurrence_frequencies.txt");
+            }
+            catch
+            {
+                filefound = false;
+            }
+			
+			if (filefound)
+			{
+				for (int i = 0; i < word_cooccurrence.Count; i++)
+				{
+					oWrite.WriteLine(word_cooccurrence[i]);
+				}
+				oWrite.Close();
+			}
+
+        }
+				
 		#endregion
 		
         #region "validation"

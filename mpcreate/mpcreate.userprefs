@@ -2,17 +2,15 @@
   <MonoDevelop.Ide.Workbench ActiveDocument="Main.cs" ctype="Workbench">
     <Files>
       <File FileName="../mpmist/README.txt" Line="1" Column="1" />
-      <File FileName="Main.cs" Line="1480" Column="33" />
-      <File FileName="DEBIAN/control" Line="2" Column="13" />
-      <File FileName="AssemblyInfo.cs" Line="20" Column="32" />
-      <File FileName="metaphone.cs" Line="1418" Column="1" />
-      <File FileName="nysiis.cs" Line="20" Column="15" />
+      <File FileName="../../sentience/applications/fishfood/MersenneTwister.cs" Line="444" Column="1" />
+      <File FileName="Main.cs" Line="147" Column="24" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
-          <Node name="mpcreate" expanded="True" selected="True">
+          <Node name="mpcreate" expanded="True">
             <Node name="DEBIAN" expanded="True" />
+            <Node name="Main.cs" selected="True" />
           </Node>
         </State>
       </Pad>

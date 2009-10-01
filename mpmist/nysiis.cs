@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace mpcreate
+namespace mpmist
 {
 	/// <summary>
 	/// New York State Identification and Intelligence System (NYSIIS) Phonetic Encoder
@@ -21,6 +21,9 @@ namespace mpcreate
 	        "i",
 	        "in",
 	        "is",
+			"than",
+			"does",
+			"did",
 	        "it",
 	        "if",
 	        "be",
