@@ -85,45 +85,77 @@ namespace mpgac
 							question += args[i] + " ";
 						question = question.Trim();
 						
-						//Console.WriteLine("args: " + question);
-						
-						string phoneme_index = phoneme.ToNgramStandardised(question, 3, false);
-						float coordinate_phoneme = GetNgramIndex(phoneme_index, 80);
-		                string index_soundex = Soundex.ToSoundexStandardised(question, false, false);
-						float coordinate_soundex = GetNgramIndex(index_soundex, 80);
-						
-						int idx1 = 0;
-						for (idx1 = 0; idx1 < no_of_records; idx1++)
-							if (index1[idx1] >= coordinate_phoneme) break;
-
-						int idx2 = 0;
-						for (idx2 = 0; idx2 < no_of_records; idx2++)
-							if (index2[idx2] >= coordinate_soundex) break;
-						
-						int x = idx1 * image_width / no_of_records;
-						int y = idx2 * image_width / no_of_records;
-						if ((x < image_width) && (y < image_width))
+						if (question.StartsWith("-validate "))
 						{
-						    int n = ((y * image_width) + x)*3;
-							int r = img[n+2];
-							int g = img[n+1];
-							int b = img[n];
+							Validate(index1,index2,image_width,img,args[args.Length-1],"Mind Hack");
+						}
+						else
+						{						
+							//Console.WriteLine("args: " + question);
 							
-							if (!((r==0) && (g==0) && (b==0)))
+							int answer = GetAnswer(question, index1, index2,image_width,img);
+							switch(answer)
 							{
-								if (g > 0)
-									Console.WriteLine("Yes");
-								else
-									Console.WriteLine("No");
+								case 1: {
+								    Console.WriteLine("Yes");
+									break;
+								}
+								case -1: {
+								    Console.WriteLine("No");
+									break;
+								}
+								case 0: {
+								    Console.WriteLine("Don't know");
+									break;
+								}
 							}
-							else
-							{
-								Console.WriteLine("Don't know");
-							}
-						}						
+							
+						}
 					}
 				}
 			}
+		}
+		
+		private static int GetAnswer(
+		    string question,
+		    float[] index1,
+		    float[] index2,
+		    int image_width,
+		    byte[] img)
+		{
+			int no_of_records = index1.Length;
+			int result = 0;
+			string phoneme_index = phoneme.ToNgramStandardised(question, 3, false);
+			float coordinate_phoneme = GetNgramIndex(phoneme_index, 80);
+            string index_soundex = Soundex.ToSoundexStandardised(question, false, false);
+			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
+			
+			int idx1 = 0;
+			for (idx1 = 0; idx1 < no_of_records; idx1++)
+				if (index1[idx1] >= coordinate_phoneme) break;
+
+			int idx2 = 0;
+			for (idx2 = 0; idx2 < no_of_records; idx2++)
+				if (index2[idx2] >= coordinate_soundex) break;
+			
+			int x = idx1 * image_width / no_of_records;
+			int y = idx2 * image_width / no_of_records;
+			if ((x < image_width) && (y < image_width))
+			{
+			    int n = ((y * image_width) + x)*3;
+				int r = img[n+2];
+				int g = img[n+1];
+				int b = img[n];
+				
+				if (!((r==0) && (g==0) && (b==0)))
+				{
+					if (g > 0)
+						result=1;
+					else
+						result=-1;
+				}
+			}						
+			return(result);
 		}
 		
 		private static float GetNgramIndex(string idx, int max_length)
@@ -158,6 +190,120 @@ namespace mpgac
 			
 			return((float)index);
 		}
+		
+		#region "validation"
+
+		static string ToNumeric(string str)
+		{
+			string result = "";
+			char[] ch = str.ToCharArray();
+			for (int i = 0; i < ch.Length; i++)
+			{
+				if (((ch[i] >= '0') && (ch[i] <= '9')) || (ch[i]=='.'))
+					result += ch[i];
+			}
+			return(result);
+		}
+		
+        static void Validate(
+		    float[] index1,
+		    float[] index2,
+		    int image_width,
+		    byte[] img,
+		    string mindpixels_filename, 
+            string initialstring)
+        {
+            bool filefound = true;
+            string str, question;
+            float coherence;
+			StreamReader oRead = null;			
+			int hits=0,misses=0;
+			
+            try
+            {
+                oRead = File.OpenText(mindpixels_filename);
+            }
+            catch
+            {
+                filefound = false;
+            }
+
+            if (filefound)
+            {
+				Console.WriteLine("Validating map against training corpus");
+                bool initialstringFound = false;
+				int i = 0;
+								
+	            while ((!oRead.EndOfStream) && (i < 80000))
+	            {						
+	                str = oRead.ReadLine();
+	                if (!initialstringFound)
+	                {
+	                    /// look for an initial header string after which the data begins
+	                    if (str.Contains(initialstring)) initialstringFound = true;
+	                }
+	                else
+	                {
+	                    /// read the data
+	                    if (str != "")
+	                    {
+	                        try
+	                        {
+	                            coherence = Convert.ToSingle(ToNumeric(str.Substring(1, 4)));
+								if (coherence > 1) coherence = 1;
+	                            question = str.Substring(6);
+
+								int answer = GetAnswer(question, index1, index2,image_width,img);
+								switch(answer)
+								{
+									case 1: {
+									    if (coherence > 0.5f) 
+										    hits++;
+									    else
+										    misses++;
+										break;
+									}
+									case -1: {
+									    if (coherence < 0.5f) 
+										    hits++;
+									    else
+										    misses++;
+										break;
+									}
+									case 0: {
+									    if ((coherence > 0.45f) && (coherence < 0.55f))
+										    hits++;
+									    else
+										    misses++;
+										break;
+									}
+								}
+
+								if (i % 1000 == 0) Console.Write(".");
+								i++;
+	                        }
+	                        catch //(Exception ex)
+	                        {
+								//Console.WriteLine("str: " + str);
+								//Console.WriteLine("error: " + ex.Message);
+	                        }
+	                    }
+	                }
+	            }
+	            if (oRead.EndOfStream)
+	            {
+	                oRead.Close();
+	            }						
+			}
+			Console.WriteLine("");
+			if (hits+misses>0)
+			{
+				int score = hits * 100 / (hits+misses);
+				Console.WriteLine("Validation score " + score.ToString() + "%");
+			}
+        }		
+		
+		#endregion
 		
 	}
 }

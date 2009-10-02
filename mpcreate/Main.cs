@@ -165,6 +165,23 @@ namespace mpcreate
 								Console.WriteLine(word_cooccurrence.Count.ToString() + " word cooccurrences");
 								*/
 								
+								
+								List<string> differential = new List<string>();
+								List<int> differential_frequency = new List<int>();
+								List<string> semantic_differential = new List<string>();
+								
+								loadGACSemanticDifferentials(
+								    server_name,
+								    database_name,
+								    user_name,
+								    password,
+									load_filename, 
+								    "Mind Hack",
+									differential,
+									differential_frequency,
+								    semantic_differential);
+								    
+								
 							    loadGAC(
 					                load_filename, 
 			                        "Mind Hack",
@@ -2994,6 +3011,605 @@ namespace mpcreate
 
         }
 				
+		#endregion
+		
+		#region "semantic differentials"
+		
+		static string[] semantic_dimensions = {
+			"good-bad","E",
+			"optimistic-pessimistic","E",
+			"positive-negative","E",
+			"complete-incomplete", "E",
+			"timely-untimely","E",			
+			"acid-base","E",
+			"alive-dead","E",
+			"proponent-antagonist","E",
+			"front-back","E",
+			"white-black","E",
+			"tactful-blunt","E",
+			"ceiling-floor","E",
+			"real-character","E",
+			"expensive-cheap","E",
+			"concentration-meditation","E",
+			"life-death","E",
+			"increase-decrease","E",
+			"disorder-order","E",
+			"diurnal-nocturnal","E",
+			"east-west","E",
+			"everything-nothing","E",
+			"good-evil","E",
+			"truth-falsehood","E",
+			"false-true","E",
+			"truth-falsity","E",
+			"near-far","E",
+			"fideism-rationalism","E",
+			"fission-fusion","E",
+			"flammable-inflammable","E",
+			"flexible-rigid","E",
+			"greater-less","E",
+			"happy-sad","E",
+			"love-hate","E",
+			"truth-lie","E",
+			"light-shaddow","E",
+			"magic-science","E",
+			"man-woman","E",
+			"misnight-noon","E",
+			"nord-south","E",
+			"northern-seasons","E",
+			"north-south","E",
+			"objective-subjective","E",
+			"peace-war","E",
+			"permanent-temporary","E",
+			"phallic-vaginal","E",
+			"recycle-throw","E",
+			"right-wrong","E",
+			"salty-sweet","E",
+
+			"hard-soft","P",
+			"heavy-light","P",
+			"feminine-masculine","P",
+			"female-male","P",
+			"severe-lenient","P",
+			"strong-weak","P",
+			"tenacious-yielding","P",
+			"free-constrained","P",
+			"spacious-constricted","P",
+			"serious-humourous","P",
+			"serious-humorous","P",
+			"big-small","P",
+			"tall-short","P",
+			"transparent-opaque","P",
+			"kind-cruel","P",
+			"clean-dirty","P",
+			"light-dark","P",
+			"graceful-awkward","P",
+			"pleasurable-painful","P",
+			"pleasure-pain","P",
+			"beautiful-ugly","P",
+			"fast-slow","P",
+			"rounded-angular","P",
+			"young-old","P",
+			"new-old","P",
+			"dry-wet","P",
+			
+			"active-passive","A",
+			"cold-hot","A",
+			"cold-warm","A",
+			"exciting-boring","A",
+			"intentional-unintentional","A",
+			"complex-simple","A",
+			"successful-unsuccessful","A",
+			"meaningful-meaningless","A",
+			"important-unimportant","A",
+			"important-trivial","A",
+			"progressive-regressive","A",
+			"forward-backwards","A",
+		};
+		
+		static void SemanticDifferentialDimension(
+		    string word,
+		    ref int Evaluation,
+		    ref int Potency,
+		    ref int Activity)
+		{
+			Evaluation=0;
+			Potency=0;
+			Activity=0;
+			
+			for (int i = 0; i < semantic_dimensions.Length;i+=2)
+			{
+				int pos = semantic_dimensions[i].IndexOf(word);
+				if (pos > -1)
+				{					
+					int v = 7;
+					if (pos > 1) v = 1;
+					if (semantic_dimensions[i+1] == "E") Evaluation = v;
+					if (semantic_dimensions[i+1] == "P") Potency = v;
+					if (semantic_dimensions[i+1] == "A") Activity = v;
+					break;
+				}
+			}
+		}
+
+        static void loadGACWordSpace(
+            string server_name,
+            string database_name,
+            string user_name,
+            string password,
+		    string mindpixels_filename, 
+            string initialstring,
+		    List<string> differential,
+		    List<string> semantic_differential)
+        {
+            bool filefound = true;
+            string str, question;
+            float coherence;
+			float[] max_value = new float[differential.Count];
+			float[] min_value = new float[differential.Count];
+			StreamReader oRead = null;
+			
+			int index_max = 36*36;
+		    List<string>[] iword = new List<string>[index_max];
+			List<float[]>[] iword_space = new List<float[]>[index_max];
+			
+            try
+            {
+                oRead = File.OpenText(mindpixels_filename);
+            }
+            catch
+            {
+                filefound = false;
+            }
+
+            if (filefound)
+            {
+				Console.WriteLine("WARNING: This may take some time...");
+                bool initialstringFound = false;
+				int i = 0;
+						
+	            while ((!oRead.EndOfStream) && (i <= 80000))
+	            {						
+	                str = oRead.ReadLine();
+	                if (!initialstringFound)
+	                {
+	                    /// look for an initial header string after which the data begins
+	                    if (str.Contains(initialstring)) initialstringFound = true;
+	                }
+	                else
+	                {
+	                    /// read the data
+	                    if (str != "")
+	                    {
+	                        try
+	                        {
+	                            coherence = Convert.ToSingle(ToNumeric(str.Substring(1, 4)));
+								if (coherence > 1) coherence = 1;
+	                            question = str.Substring(6);
+								
+								string question2="";
+								int[] word_index = null;
+								string[] question_word = null;
+								for (int j = differential.Count-1; j >= 0; j--)
+								{
+									if (question.Contains(" " + differential[j] + " "))
+									{
+										if (question_word == null)
+										{
+											question2 = RemoveCommonWords(question);
+											question_word = question2.Split(' ');
+											
+											word_index = new int[question_word.Length];
+											for (int ii = 0; ii < question_word.Length; ii++)
+											{
+												if (question_word[ii].Length > 2)
+												{
+													if (question_word[ii].EndsWith("s"))
+														if (!question_word[ii].EndsWith("ss"))
+														    question_word[ii] = question_word[ii].Substring(0, question_word[ii].Length-1);
+												}
+												
+												char[] ch = question_word[ii].ToCharArray();												
+												int word_index0 = ch[0];
+												int word_index1 = ch[1];
+												if ((ch[0] >= 'a') && (ch[0] <= 'z'))
+													word_index0 -= (int)'a';
+												else
+													word_index0 = (word_index0 - (int)'0') + 26;
+												if ((ch[1] >= 'a') && (ch[1] <= 'z'))
+													word_index1 -= (int)'a';
+												else
+													word_index1 = (word_index1 - (int)'0') + 26;
+												word_index[ii] = word_index0*36+word_index1;
+											}
+											
+										}
+										for (int k = 0; k < question_word.Length; k++)
+										{
+											if (question_word[k] != differential[j])
+											{
+												int idx = word_index[k];
+												if (iword[idx] == null)
+													iword[idx] = new List<string>();
+												
+												if (iword_space[idx] == null)
+												{
+													iword_space[idx] = new List<float[]>();
+												}
+											
+												int pos2 = iword[idx].IndexOf(question_word[k]);
+												if (pos2 == -1)
+												{
+													//Console.WriteLine("word: " + question_word[k]);
+													iword[idx].Add(question_word[k]);
+													iword_space[idx].Add(new float[differential.Count]);
+													pos2 = 0;
+												}
+												if (coherence > 0.5f)
+												    iword_space[idx][pos2][j] += 1;
+												else
+													iword_space[idx][pos2][j] -= 1;
+												if (iword_space[idx][pos2][j] > max_value[j]) max_value[j] = iword_space[idx][pos2][j];
+												if (iword_space[idx][pos2][j] < min_value[j]) min_value[j] = iword_space[idx][pos2][j];
+											}
+										}
+									}
+								}
+								
+								if (i % 1000 == 0) Console.WriteLine(i.ToString());
+								i++;
+	                        }
+	                        catch //(Exception ex)
+	                        {
+								//Console.WriteLine("str: " + str);
+								//Console.WriteLine("error: " + ex.Message);
+	                        }
+	                    }
+	                }
+	            }
+	            if (oRead.EndOfStream)
+	            {
+	                oRead.Close();
+	            }						
+			}
+
+			Console.WriteLine("Updating words");
+			for (int i = 0; i < index_max; i++)
+			{
+				if (iword[i] != null)
+				{
+				    for (int j = 0; j < iword[i].Count; j++)
+					{
+						string wrd = iword[i][j];
+						char[] ch = wrd.ToCharArray();
+						if (!((ch[0] >= '0') && (ch[0] <= '9')))
+						{						
+							int ctr=0;
+							for (int k = 0; k < differential.Count; k++)
+								if (iword_space[i][j][k] > 0) ctr++;
+							if (ctr > 0)
+							{
+								Console.Write(wrd + " | ");
+								Console.Write(" " + ctr.ToString() + " | ");
+								
+								ctr=0;
+								float[] word_vector = new float[3];
+							    int Evaluation=0;
+							    int Potency=0;
+							    int Activity=0;
+								int hits=0;
+								for (int k = 0; k < differential.Count; k++)
+								{
+									float maxval = max_value[k];
+									if (-min_value[k] > max_value[k]) maxval = -min_value[k];
+									if (iword_space[i][j][k] > 0)
+									{
+									    float val = (int)(iword_space[i][j][k] * 1000 / maxval)/1000.0f;
+									    SemanticDifferentialDimension(differential[k], ref Evaluation, ref Potency, ref Activity);
+										word_vector[0] += Evaluation*val;
+										word_vector[1] += Potency*val;
+										word_vector[2] += Activity*val;
+										hits+=7;
+									}					
+								}
+								if (hits>0)
+								{
+								    word_vector[0] /= hits;
+									word_vector[1] /= hits;
+									word_vector[2] /= hits;
+								}
+								Console.WriteLine(" " + word_vector[0].ToString() + " " + word_vector[1].ToString() + " " + word_vector[2].ToString());
+								//Console.WriteLine("");
+							}
+						}
+					}
+				}
+			}
+			
+			Console.WriteLine("Saving");
+			StreamWriter oWrite = null;
+			filefound = true;			
+            try
+            {
+                oWrite = File.CreateText("mindpixels_word_space.txt");
+            }
+            catch
+            {
+                filefound = false;
+            }
+			
+			if (filefound)
+			{
+				//for (int i = 0; i < word.Count; i++)
+				{
+				//	oWrite.WriteLine(word[i]);
+				}
+				oWrite.Close();
+			}
+
+        }
+				
+        static void loadGACSemanticDifferentials(
+            string server_name,
+            string database_name,
+            string user_name,
+            string password,
+		    string mindpixels_filename, 
+            string initialstring,
+		    List<string> polar_term,
+		    List<int> polar_term_frequency,
+		    List<string> semantic_differential)
+        {
+            bool filefound = true;
+            string str, question;
+            float coherence;
+			StreamReader oRead = null;			
+			int max = 0;
+			
+            try
+            {
+                oRead = File.OpenText(mindpixels_filename);
+            }
+            catch
+            {
+                filefound = false;
+            }
+
+            if (filefound)
+            {
+				Console.WriteLine("WARNING: This may take some time...");
+                bool initialstringFound = false;
+				int i = 0;
+								
+	            while (!oRead.EndOfStream)
+	            {						
+	                str = oRead.ReadLine();
+	                if (!initialstringFound)
+	                {
+	                    /// look for an initial header string after which the data begins
+	                    if (str.Contains(initialstring)) initialstringFound = true;
+	                }
+	                else
+	                {
+	                    /// read the data
+	                    if (str != "")
+	                    {
+	                        try
+	                        {
+	                            coherence = Convert.ToSingle(ToNumeric(str.Substring(1, 4)));
+								if (coherence > 1) coherence = 1;
+	                            question = str.Substring(6);
+
+								if (coherence > 0.5f)
+								{
+									if (question.Contains(" opposite of "))
+									{
+										string qstr = " a type of ";
+										int pos2 = question.IndexOf(qstr);
+										if (pos2 > -1)
+										    question = question.Substring(0,pos2) + " " + question.Substring(pos2 + qstr.Length);
+
+										qstr = " considered ";
+										pos2 = question.IndexOf(qstr);
+										if (pos2 > -1)
+										    question = question.Substring(0,pos2) + " " + question.Substring(pos2 + qstr.Length);
+
+										qstr = " capable of ";
+										pos2 = question.IndexOf(qstr);
+										if (pos2 > -1)
+										    question = question.Substring(0,pos2) + " " + question.Substring(pos2 + qstr.Length);
+
+										qstr = " mean ";
+										pos2 = question.IndexOf(qstr);
+										if (pos2 > -1)
+										    question = question.Substring(0,pos2) + " " + question.Substring(pos2 + qstr.Length);
+											
+										string wrd0 = "";
+										string wrd1 = "";
+										string[] str2 = (RemoveCommonWords(question)).Split(' ');
+										if ((str2[0] == "opposite") && (str2.Length==3))
+										{
+											wrd0 = str2[1];
+											wrd1 = str2[2];
+											//if (wrd0 == "type") Console.WriteLine(question);
+										}
+										else
+										{
+											for (int j = 1; j < str2.Length-1; j++)
+											{
+												if (str2[j] == "opposite")
+												{
+											        wrd0 = str2[j - 1];
+											        wrd1 = str2[j + 1];												
+													//if (wrd0 == "type") Console.WriteLine(question);
+												}
+											}
+										}
+										if (wrd0 != wrd1)
+										{
+											if ((wrd0.Length > 2) && (wrd1.Length > 2))
+											{
+												for (int ii = 0; ii < 2; ii++)
+												{
+													string diff = wrd0;
+													if (ii==1) diff = wrd1;
+													
+													int pos = polar_term.IndexOf(diff);
+													if (pos == -1)
+													{													
+														polar_term.Add(diff);
+														polar_term_frequency.Add(1);
+														if (max == 0) max = 1;
+													}
+													else
+													{
+														polar_term_frequency[pos]++;
+														if (polar_term_frequency[pos] > max) 
+															max = polar_term_frequency[pos];
+													}
+												}
+												
+												List<string> wrd_list = new List<string>();
+												wrd_list.Add(wrd0);
+												wrd_list.Add(wrd1);
+												wrd_list.Sort();
+												string wrdstr = wrd_list[0] + "-" + wrd_list[1];
+												pos2 = semantic_differential.IndexOf(wrdstr);
+												if (pos2 == -1)
+												{
+													semantic_differential.Add(wrdstr);
+											        Console.WriteLine(wrdstr);
+												}
+											}
+										}
+									}
+								}
+								
+								if ((question.Contains(" very ")) ||
+								    (question.Contains(" extremely ")) ||
+								    (question.Contains(" quite ")) ||
+								    (question.Contains(" slightly "))
+								    )
+								{
+									string[] str2 = (TextOnly(question)).Split(' ');
+									for (int j = 0; j < str2.Length; j++)
+									{
+										if ((str2[j] == "very") ||
+										    (str2[j] == "extremely") ||
+										    (str2[j] == "quite") ||
+										    (str2[j] == "slightly"))
+										{
+											if (j < str2.Length-1)
+											{
+												string diff = str2[j+1].ToLower();
+												if ((diff != "very") &&
+												    (diff != "extremely") &&
+												    (diff != "quite") &&
+												    (diff != "slightly"))
+												{
+													int pos = polar_term.IndexOf(diff);
+													if (pos == -1)
+													{													
+														polar_term.Add(diff);
+														polar_term_frequency.Add(1);
+														if (max == 0) max = 1;
+													}
+													else
+													{
+														polar_term_frequency[pos]++;
+														if (polar_term_frequency[pos] > max) 
+															max = polar_term_frequency[pos];
+													}
+												}
+											}
+										}
+									}
+								}
+								
+								i++;
+	                        }
+	                        catch //(Exception ex)
+	                        {
+								//Console.WriteLine("str: " + str);
+								//Console.WriteLine("error: " + ex.Message);
+	                        }
+	                    }
+	                }
+	            }
+	            if (oRead.EndOfStream)
+	            {
+	                oRead.Close();
+	            }						
+			}
+			
+			StreamWriter oWrite = null;
+			filefound = true;			
+            try
+            {
+                oWrite = File.CreateText("mindpixels_polar_terms.txt");
+            }
+            catch
+            {
+                filefound = false;
+            }
+			
+			if (filefound)
+			{
+				Console.WriteLine(polar_term.Count.ToString() + " scalar words detected");
+				List<string> polar_term_new = new List<string>();
+				for (int i = 0; i < polar_term.Count; i++)
+				{
+					string freq_str = Convert.ToString((int)(polar_term_frequency[i]*100 / (float)max)/100.0f);
+					if (freq_str.Length == 1) freq_str += ".";
+					while (freq_str.Length < 4) freq_str += "0";
+					polar_term_new.Add(freq_str + " " + polar_term[i]);
+				}
+				polar_term_new.Sort();
+				polar_term_new.Reverse();
+				polar_term.Clear();
+				for (int i = 0; i <polar_term_new.Count; i++)
+				{
+					oWrite.WriteLine(polar_term_new[i]);
+					string[] str2 = polar_term_new[i].Split(' ');
+					polar_term.Add(str2[1]);
+				}				
+				oWrite.Close();
+			}
+			
+			oWrite = null;
+			filefound = true;			
+            try
+            {
+                oWrite = File.CreateText("mindpixels_semantic_differentials.txt");
+            }
+            catch
+            {
+                filefound = false;
+            }
+			
+			if (filefound)
+			{
+				Console.WriteLine(semantic_differential.Count.ToString() + " semantic differentials detected");
+				semantic_differential.Sort();
+				for (int i = 0; i < semantic_differential.Count; i++)
+				{
+					oWrite.WriteLine(semantic_differential[i]);
+				}
+				oWrite.Close();
+			}
+			
+			
+            loadGACWordSpace(
+                server_name,
+                database_name,
+                user_name,
+                password,
+		        mindpixels_filename, 
+                initialstring,
+		        polar_term,
+			    semantic_differential);
+        }
+		
+		
 		#endregion
 		
         #region "validation"

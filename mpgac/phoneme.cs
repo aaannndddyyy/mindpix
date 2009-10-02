@@ -179,7 +179,6 @@ namespace mpgac
 		/* Phoneme definitions */
 		static string Pause = " ";	/* Short silence */
 		static string Silent = "";	/* No phonemes */
-		static string PhonemeSeparator = "|";
 		
 		const int LEFT_PART	= 0;
 		const int MATCH_PART = 1;
@@ -972,13 +971,7 @@ namespace mpgac
 			"fAOrtIYnTH",	"fIHftIYnTH", 	"sIHkstIYnTH",	"sEHvEHntIYnTH",
 			"EYtIYnTH",	"nAYntIYnTH"
 		};
-		
-		static string[] Ord_twenties = 
-		{
-			"twEHntIYEHTH","THERtIYEHTH",	"fOWrtIYEHTH",	"fIHftIYEHTH",
-			"sIHkstIYEHTH","sEHvEHntIYEHTH","EYtIYEHTH",	"nAYntIYEHTH"
-		};
-		
+				
 		private static bool IsNumeric(string text)
 		{           
 		    Regex objNotWholePattern = new Regex("[^0-9]");

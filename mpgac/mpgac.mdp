@@ -3,7 +3,7 @@
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="mpgac" />
       <Build debugmode="True" target="Exe" />
-      <Execution runwithwarnings="True" commandlineparameters="Is paris the capital of france?" consolepause="True" runtime="MsNet" />
+      <Execution runwithwarnings="True" commandlineparameters="Do chairs have legs?" consolepause="True" runtime="MsNet" />
       <EnvironmentVariables />
       <CodeGeneration compiler="Mcs" warninglevel="4" optimize="False" unsafecodeallowed="True" generateoverflowchecks="False" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
