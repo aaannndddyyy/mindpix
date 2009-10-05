@@ -18,6 +18,7 @@ namespace cognitivedynamics
 		public byte[] test_image;
 		Bitmap bmp;
 		private bool yes_left;
+		private int coherence_index;
 		
 		public dynamicstestyesno(
 		    string test_propositions_filename,
@@ -31,10 +32,10 @@ namespace cognitivedynamics
 			mouse_position = new List<double>();
 			mouse_time = new List<DateTime>();
 			
-			propositions = new List<string>[2];
+			propositions = new List<string>[10];
 			rnd = new Random();
-			propositions[0] = new List<string>();
-			propositions[1] = new List<string>();
+			for (int i = 0; i < 10; i++)
+			    propositions[i] = new List<string>();
 			
 			BitmapArrayConversions.updatebitmap_unsafe(test_image, bmp);
 			bmp.Save("test.jpg",System.Drawing.Imaging.ImageFormat.Jpeg);			
@@ -67,6 +68,7 @@ namespace cognitivedynamics
 				oWrite.WriteLine(mouse_time.Count.ToString());
 				oWrite.WriteLine(yes.ToString());
 				oWrite.WriteLine(yes_left.ToString());
+				oWrite.WriteLine(coherence_index.ToString());
 				for (int t = 0; t < mouse_time.Count; t++)
 				{
 					oWrite.Write(mouse_time[t].ToBinary().ToString() + " ");
@@ -101,19 +103,15 @@ namespace cognitivedynamics
 		    drawing.AddText(test_image, image_width, image_height, "Yes", "Courier", font_size, 0,0,0, right_x-font_size, yesno_y-font_size);
 		    drawing.AddText(test_image, image_width, image_height, "No", "Courier", font_size, 0,0,0, left_x-font_size, yesno_y-font_size);
 			
-			int[,] average_no = new int[image_height,2];
-			int[,] average_yes = new int[image_height,2];
+			int[,,] average = new int[image_height,10,2];
 			int histogram_max=1;
 			int[] histogram_no = new int[image_width];
 			int[] histogram_yes = new int[image_width];
-			int[] histogram_decision_time_no = new int[1000];
-			int[] histogram_decision_time_yes = new int[1000];
-			int max_decision_time_sec = 10;
+			int[,] histogram_decision_time = new int[5,1000];
+			int max_decision_time_mS = 100;
             int decision_time_hist_max = 1;
-			float average_decision_time_yes = 0;
-			float average_decision_time_no = 0;
-			int average_decision_time_hits_yes=0;
-			int average_decision_time_hits_no=0;
+			float average_decision_time = 0;
+			int average_decision_time_hits=0;
 			DateTime prev_timestamp=new DateTime(1900,1,1);
 			
             try
@@ -133,6 +131,7 @@ namespace cognitivedynamics
 					int steps = Convert.ToInt32(oRead.ReadLine());
 					bool yes = Convert.ToBoolean(oRead.ReadLine());
 					bool yes_left = Convert.ToBoolean(oRead.ReadLine());
+					coherence_index = Convert.ToInt32(oRead.ReadLine());
 					int prev_x = 0;
 					int prev_y = 0;
 					DateTime start_time = DateTime.Now;
@@ -153,28 +152,17 @@ namespace cognitivedynamics
 						if (t == steps-1) 
 						{
 							TimeSpan diff = timestamp.Subtract(start_time);
-							int time_sec = (int)diff.TotalSeconds;
-							if (time_sec < 1000)
-							{
-								if (time_sec > max_decision_time_sec)
-									max_decision_time_sec = time_sec;
-								if (yes)
-								{
-								    histogram_decision_time_yes[time_sec]++;
-									if (histogram_decision_time_yes[time_sec] > decision_time_hist_max)
-										decision_time_hist_max = histogram_decision_time_yes[time_sec];
-									average_decision_time_yes += (float)diff.TotalSeconds;
-									average_decision_time_hits_yes++;
-								}
-								else
-								{
-									histogram_decision_time_no[time_sec]++;
-									if (histogram_decision_time_no[time_sec] > decision_time_hist_max)
-										decision_time_hist_max = histogram_decision_time_no[time_sec];
-									average_decision_time_no += (float)diff.TotalSeconds;
-									average_decision_time_hits_no++;
-								}
-								
+							int time_mS = (int)diff.TotalMilliseconds;
+							if (time_mS/4 < 1000/4)
+							{								
+								if (time_mS > max_decision_time_mS)
+									max_decision_time_mS = time_mS;								
+							
+							    histogram_decision_time[coherence_index/2,time_mS/250]++;
+								if (histogram_decision_time[coherence_index/2,time_mS/250] > decision_time_hist_max)
+									decision_time_hist_max = histogram_decision_time[coherence_index/2,time_mS/250];
+								average_decision_time += (float)time_mS;
+								average_decision_time_hits++;
 							}
 						}
 						int x = Convert.ToInt32(Convert.ToSingle(s2[1]));
@@ -198,10 +186,11 @@ namespace cognitivedynamics
 									    (yy > -1) && (yy < image_height))
 									{
 										
+										average[yy,coherence_index,0] += xx;
+										average[yy,coherence_index,1]++;											
+										
 										if (yes)
 										{
-											average_yes[yy,0] += xx;
-											average_yes[yy,1]++;											
 
 											int xx2 = xx / bucket_pixels;
 					                        histogram_yes[xx2]++;
@@ -211,9 +200,6 @@ namespace cognitivedynamics
 										}
 										else
 										{
-											average_no[yy,0] += xx;
-											average_no[yy,1]++;
-											
 											int xx2 = xx / bucket_pixels;
 											histogram_no[xx2]++;
 											if (histogram_no[xx2] > histogram_max)
@@ -245,30 +231,30 @@ namespace cognitivedynamics
 			
 			drawing.drawLine(test_image, image_width, image_height, image_width/2, 0, image_width/2, image_height-1, 220,220,220,1,false);
 
-			for (int y = 0; y < image_height; y++)
+			for (int coherence_index = 0; coherence_index < 10; coherence_index++)
 			{
-				if (average_yes[y,1] > 0)
+				bool labeled = false;
+				int r = 255 - (255 * coherence_index/10);
+				int g = 255 * coherence_index/10;
+				for (int y = 0; y < image_height; y++)
 				{
-					int x = average_yes[y,0] / average_yes[y,1];
-					int n = ((y * image_width) + x) * 3;
-					test_image[n]=0;
-					test_image[n+1]=255;
-					test_image[n+2]=0;
-
-				}
-				if (average_no[y,1] > 0)
-				{
-					int x = average_no[y,0] / average_no[y,1];
-					int n = ((y * image_width) + x) * 3;
-					test_image[n]=0;
-					test_image[n+1]=0;
-					test_image[n+2]=255;
-					
+					if (average[y,coherence_index,1] > 0)
+					{
+						int x = average[y,coherence_index,0] / average[y,coherence_index,1];
+						drawing.drawSpot(test_image, image_width, image_height, x,y,1,r,g,0);
+						
+						if ((!labeled) && (y > image_height*15/100))
+						{
+							drawing.AddText(test_image,image_width, image_height, "0." + coherence_index.ToString(), "Courier", 10, 0,0,0,x,y + rnd.Next(40)-20);
+							labeled=true;
+						}
+					}
 				}
 			}
 			BitmapArrayConversions.updatebitmap_unsafe(test_image, bmp);
 			bmp.Save("test_results_average.jpg",System.Drawing.Imaging.ImageFormat.Jpeg);
 
+			/*
 			for (int i = image_width*image_height*3-1; i >= 0; i--)
 				test_image[i]=255;
 			drawing.drawLine(test_image, image_width, image_height, image_width/2, 0, image_width/2, image_height-1, 220,220,220,1,false);
@@ -283,34 +269,27 @@ namespace cognitivedynamics
 			}
 			BitmapArrayConversions.updatebitmap_unsafe(test_image, bmp);
 			bmp.Save("test_results_horizontal.jpg",System.Drawing.Imaging.ImageFormat.Jpeg);
+			*/
 
+			/*
 			for (int i = image_width*image_height*3-1; i >= 0; i--) test_image[i]=255;
-			for (int t = 1; t < max_decision_time_sec; t++)
+			for (int coherence_index=0; coherence_index<5;coherence_index++)
 			{
-				int prev_x = (t-1) * image_width / max_decision_time_sec;
-				int x = t * image_width / max_decision_time_sec;
-				
-				int prev_y_no = image_height - 1 - (histogram_decision_time_no[t-1] * image_height / decision_time_hist_max);
-				int y_no = image_height - 1 - (histogram_decision_time_no[t] * image_height / decision_time_hist_max);
-				drawing.drawLine(test_image, image_width, image_height, prev_x, prev_y_no, x, y_no, 255,0,0,0,false);
-
-				int prev_y_yes = image_height - 1 - (histogram_decision_time_yes[t-1] * image_height / decision_time_hist_max);
-				int y_yes = image_height - 1 - (histogram_decision_time_yes[t] * image_height / decision_time_hist_max);
-				drawing.drawLine(test_image, image_width, image_height, prev_x, prev_y_yes, x, y_yes, 0,255,0,0,false);
-			}
-			if (average_decision_time_hits_yes > 0)
-			{
-			    int decision_x = (int)((average_decision_time_yes / average_decision_time_hits_yes) * image_width / max_decision_time_sec);
-			    drawing.drawLine(test_image, image_width, image_height, decision_x, 0, decision_x, image_height-1, 0,255,0,0,false);
-			}
-			if (average_decision_time_hits_no > 0)
-			{
-			    int decision_x = (int)((average_decision_time_no / average_decision_time_hits_no) * image_width / max_decision_time_sec);
-			    drawing.drawLine(test_image, image_width, image_height, decision_x, 0, decision_x, image_height-1, 255,0,0,0,false);				
+				int r = 255-(coherence_index*255/5);
+				int g = coherence_index*255/5;
+				for (int t = 1; t < max_decision_time_mS/250; t++)
+				{
+					int prev_x = (t-1) * image_width / (max_decision_time_mS/250);
+					int x = t * image_width / (max_decision_time_mS/250);
+					
+					int prev_y = image_height - 1 - ((histogram_decision_time[coherence_index,t-1]) * image_height / decision_time_hist_max);
+					int y = image_height - 1 - ((histogram_decision_time[coherence_index,t]) * image_height / decision_time_hist_max);
+					drawing.drawLine(test_image, image_width, image_height, prev_x, prev_y, x, y, r,g,0,1,false);
+				}
 			}
 			BitmapArrayConversions.updatebitmap_unsafe(test_image, bmp);
 			bmp.Save("test_results_decision_times.jpg",System.Drawing.Imaging.ImageFormat.Jpeg);
-			
+			*/
 		}
 		
 		public bool Clicked()
@@ -357,18 +336,11 @@ namespace cognitivedynamics
 			mouse_time.Clear();
 			CreateTestImage();
 			string prop = "";
-			while ((prop=="") || (prop.Length> 30))
+			while ((prop=="") || (prop.Length > 30))
 			{
-				if (rnd.NextDouble() > 0.5)
-				{
-					int max = propositions[1].Count-1;
-					prop = propositions[1][rnd.Next(max)];
-				}
-				else
-				{
-					int max = propositions[0].Count-1;
-					prop = propositions[0][rnd.Next(max)];
-				}
+				coherence_index = (int)(rnd.NextDouble()*10);
+				int max = propositions[coherence_index].Count-1;
+				prop = propositions[coherence_index][rnd.Next(max)];
 			}
 			return(prop);
 		}
@@ -446,9 +418,11 @@ namespace cognitivedynamics
             string str, question;
             float coherence;
 			StreamReader oRead = null;			
-			
-			propositions[0].Clear();
-			propositions[1].Clear();
+
+			for (int i = 0; i < 10; i++)
+			{
+			    propositions[i].Clear();
+			}
 			
             try
             {
@@ -487,10 +461,8 @@ namespace cognitivedynamics
 								string question2 = " " + question + " ";
 								if (!question2.ToLower().Contains(" gac "))
 								{
-									if (coherence < 0.45f)
-									    propositions[0].Add(question);
-									if (coherence > 0.55f)
-									    propositions[1].Add(question);
+									int idx = (int)(coherence * 10);
+								    propositions[idx].Add(question);
 								}
 								
 								i++;
