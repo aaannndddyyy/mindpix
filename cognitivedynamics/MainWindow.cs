@@ -1,11 +1,12 @@
 using System;
+using System.IO;
 using System.Threading;
 using Gtk;
 using cognitivedynamics;
 
 public partial class MainWindow: Gtk.Window
 {	
-	string filename = "/usr/bin/mindpixels.txt";
+	string filename = "propositions.txt";
 	dynamicstestyesno test;
 	bool test_running;
 	
@@ -14,8 +15,11 @@ public partial class MainWindow: Gtk.Window
 		Build ();
 
 		lblProposition.Text = "Press the start button below to begin the test.  Then click to answer each proposition.";
-		test = new dynamicstestyesno(filename,400,300);
-		//test.offset_x = imgTest.GdkWindow.Screen.l
+		
+		if (!File.Exists(filename))
+			filename = "/usr/bin/" + filename;
+		
+		test = new dynamicstestyesno(filename,430,500);
 		imgTest.Pixbuf = new Gdk.Pixbuf("test.jpg");
 	}
 	
@@ -48,8 +52,10 @@ public partial class MainWindow: Gtk.Window
         //Thread timeout_thread = new Thread(new ThreadStart(timeout.Execute));
         //timeout_thread.Start();
 		
-		lblProposition.Text = test.GetProposition();		
+		lblProposition.Text = test.GetProposition();
 		imgTest.Pixbuf = new Gdk.Pixbuf("test.jpg");
+		test.offset_x = 0;
+		test.offset_y = 55;
 		test_running = true;
 		Console.WriteLine("Start test");
 	}

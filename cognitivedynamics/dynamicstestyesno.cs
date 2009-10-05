@@ -85,8 +85,9 @@ namespace cognitivedynamics
 		{
 			StreamReader oRead = null;			
 			bool filefound = true;
-			
 
+			int bucket_pixels=5;
+			int group_ms = 60;
 			int font_size = 20;
 			yesno_y = image_height * 1/10;
 			radius = image_height / 12;
@@ -102,7 +103,19 @@ namespace cognitivedynamics
 			
 			int[,] average_no = new int[image_height,2];
 			int[,] average_yes = new int[image_height,2];
-
+			int histogram_max=1;
+			int[] histogram_no = new int[image_width];
+			int[] histogram_yes = new int[image_width];
+			int[] histogram_decision_time_no = new int[1000];
+			int[] histogram_decision_time_yes = new int[1000];
+			int max_decision_time_sec = 10;
+            int decision_time_hist_max = 1;
+			float average_decision_time_yes = 0;
+			float average_decision_time_no = 0;
+			int average_decision_time_hits_yes=0;
+			int average_decision_time_hits_no=0;
+			DateTime prev_timestamp=new DateTime(1900,1,1);
+			
             try
             {
                 oRead = File.OpenText(results_filename);
@@ -114,6 +127,7 @@ namespace cognitivedynamics
 
             if (filefound)
             {
+				
 				while (!oRead.EndOfStream)
 				{
 					int steps = Convert.ToInt32(oRead.ReadLine());
@@ -121,11 +135,48 @@ namespace cognitivedynamics
 					bool yes_left = Convert.ToBoolean(oRead.ReadLine());
 					int prev_x = 0;
 					int prev_y = 0;
+					DateTime start_time = DateTime.Now;
+					int decision_time_mS = 0;
+					float speed_pixels_per_sec = 0;
+					int prev_x2 = 9999;
+					int prev_y2 = 0;
+					
 					for (int t = 0; t < steps; t++)
 					{
 						string s = oRead.ReadLine();
 						string[] s2 = s.Split(' ');
 						DateTime timestamp = DateTime.FromBinary(Convert.ToInt64(s2[0]));
+						if (t == 0)
+						{
+							start_time = timestamp;
+						}
+						if (t == steps-1) 
+						{
+							TimeSpan diff = timestamp.Subtract(start_time);
+							int time_sec = (int)diff.TotalSeconds;
+							if (time_sec < 1000)
+							{
+								if (time_sec > max_decision_time_sec)
+									max_decision_time_sec = time_sec;
+								if (yes)
+								{
+								    histogram_decision_time_yes[time_sec]++;
+									if (histogram_decision_time_yes[time_sec] > decision_time_hist_max)
+										decision_time_hist_max = histogram_decision_time_yes[time_sec];
+									average_decision_time_yes += (float)diff.TotalSeconds;
+									average_decision_time_hits_yes++;
+								}
+								else
+								{
+									histogram_decision_time_no[time_sec]++;
+									if (histogram_decision_time_no[time_sec] > decision_time_hist_max)
+										decision_time_hist_max = histogram_decision_time_no[time_sec];
+									average_decision_time_no += (float)diff.TotalSeconds;
+									average_decision_time_hits_no++;
+								}
+								
+							}
+						}
 						int x = Convert.ToInt32(Convert.ToSingle(s2[1]));
 						if (yes_left) x = image_width-1-x;
 						    
@@ -146,15 +197,27 @@ namespace cognitivedynamics
 									if ((xx > -1) && (xx < image_width) &&
 									    (yy > -1) && (yy < image_height))
 									{
+										
 										if (yes)
 										{
 											average_yes[yy,0] += xx;
-											average_yes[yy,1]++;
+											average_yes[yy,1]++;											
+
+											int xx2 = xx / bucket_pixels;
+					                        histogram_yes[xx2]++;
+					                        if (histogram_yes[xx2] > histogram_max)
+						                    histogram_max = histogram_yes[xx2];					
+											
 										}
 										else
 										{
 											average_no[yy,0] += xx;
 											average_no[yy,1]++;
+											
+											int xx2 = xx / bucket_pixels;
+											histogram_no[xx2]++;
+											if (histogram_no[xx2] > histogram_max)
+												histogram_max = histogram_no[xx2];
 										}
 									}
 									
@@ -191,6 +254,7 @@ namespace cognitivedynamics
 					test_image[n]=0;
 					test_image[n+1]=255;
 					test_image[n+2]=0;
+
 				}
 				if (average_no[y,1] > 0)
 				{
@@ -199,10 +263,54 @@ namespace cognitivedynamics
 					test_image[n]=0;
 					test_image[n+1]=0;
 					test_image[n+2]=255;
+					
 				}
 			}
 			BitmapArrayConversions.updatebitmap_unsafe(test_image, bmp);
 			bmp.Save("test_results_average.jpg",System.Drawing.Imaging.ImageFormat.Jpeg);
+
+			for (int i = image_width*image_height*3-1; i >= 0; i--)
+				test_image[i]=255;
+			drawing.drawLine(test_image, image_width, image_height, image_width/2, 0, image_width/2, image_height-1, 220,220,220,1,false);
+			for (int x = 1; x < image_width/bucket_pixels; x++)
+			{
+				int prev_y_yes = image_height - 1 - (histogram_yes[x-1]*(image_height*110/100)/histogram_max);
+				int prev_y_no = image_height - 1 - (histogram_no[x-1]*(image_height*110/100)/histogram_max);
+				int y_yes = image_height - 1 - (histogram_yes[x]*(image_height*110/100)/histogram_max);
+				int y_no = image_height - 1 - (histogram_no[x]*(image_height*110/100)/histogram_max);
+				drawing.drawLine(test_image, image_width, image_height, (x-1)*bucket_pixels, prev_y_yes, x*bucket_pixels, y_yes, 0,255,0,0,false);
+				drawing.drawLine(test_image, image_width, image_height, (x-1)*bucket_pixels, prev_y_no, x*bucket_pixels, y_no, 255,0,0,0,false);
+			}
+			BitmapArrayConversions.updatebitmap_unsafe(test_image, bmp);
+			bmp.Save("test_results_horizontal.jpg",System.Drawing.Imaging.ImageFormat.Jpeg);
+
+			for (int i = image_width*image_height*3-1; i >= 0; i--) test_image[i]=255;
+			for (int t = 1; t < max_decision_time_sec; t++)
+			{
+				int prev_x = (t-1) * image_width / max_decision_time_sec;
+				int x = t * image_width / max_decision_time_sec;
+				
+				int prev_y_no = image_height - 1 - (histogram_decision_time_no[t-1] * image_height / decision_time_hist_max);
+				int y_no = image_height - 1 - (histogram_decision_time_no[t] * image_height / decision_time_hist_max);
+				drawing.drawLine(test_image, image_width, image_height, prev_x, prev_y_no, x, y_no, 255,0,0,0,false);
+
+				int prev_y_yes = image_height - 1 - (histogram_decision_time_yes[t-1] * image_height / decision_time_hist_max);
+				int y_yes = image_height - 1 - (histogram_decision_time_yes[t] * image_height / decision_time_hist_max);
+				drawing.drawLine(test_image, image_width, image_height, prev_x, prev_y_yes, x, y_yes, 0,255,0,0,false);
+			}
+			if (average_decision_time_hits_yes > 0)
+			{
+			    int decision_x = (int)((average_decision_time_yes / average_decision_time_hits_yes) * image_width / max_decision_time_sec);
+			    drawing.drawLine(test_image, image_width, image_height, decision_x, 0, decision_x, image_height-1, 0,255,0,0,false);
+			}
+			if (average_decision_time_hits_no > 0)
+			{
+			    int decision_x = (int)((average_decision_time_no / average_decision_time_hits_no) * image_width / max_decision_time_sec);
+			    drawing.drawLine(test_image, image_width, image_height, decision_x, 0, decision_x, image_height-1, 255,0,0,0,false);				
+			}
+			BitmapArrayConversions.updatebitmap_unsafe(test_image, bmp);
+			bmp.Save("test_results_decision_times.jpg",System.Drawing.Imaging.ImageFormat.Jpeg);
+			
 		}
 		
 		public bool Clicked()
@@ -277,6 +385,9 @@ namespace cognitivedynamics
 			for (int i = image_width*image_height*3-1; i >= 0; i--)
 				test_image[i]=255;
 
+			BitmapArrayConversions.updatebitmap_unsafe(test_image, bmp);
+			bmp.Save("blank.jpg",System.Drawing.Imaging.ImageFormat.Jpeg);
+			
 			int font_size = 20;
 			yesno_y = image_height * 1/10;
 			radius = image_height / 12;
@@ -372,11 +483,15 @@ namespace cognitivedynamics
 	                            coherence = Convert.ToSingle(ToNumeric(str.Substring(1, 4)));
 								if (coherence > 1) coherence = 1;
 	                            question = str.Substring(6);
-
-								if (coherence < 0.45f)
-								    propositions[0].Add(question);
-								if (coherence > 0.55f)
-								    propositions[1].Add(question);
+								
+								string question2 = " " + question + " ";
+								if (!question2.ToLower().Contains(" gac "))
+								{
+									if (coherence < 0.45f)
+									    propositions[0].Add(question);
+									if (coherence > 0.55f)
+									    propositions[1].Add(question);
+								}
 								
 								i++;
 	                        }

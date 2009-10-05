@@ -30,7 +30,7 @@
     </action-group>
     <property name="MemberName" />
     <property name="Events">PointerMotionMask, PointerMotionHintMask, ButtonPressMask</property>
-    <property name="Title" translatable="yes">Cognitive dynamics proposition test</property>
+    <property name="Title" translatable="yes">Cognitive dynamics test</property>
     <property name="WindowPosition">Center</property>
     <property name="Resizable">False</property>
     <property name="AllowGrow">False</property>
@@ -62,6 +62,8 @@
           <widget class="Gtk.Label" id="lblProposition">
             <property name="MemberName" />
             <property name="LabelProp" translatable="yes"> </property>
+            <property name="Wrap">True</property>
+            <property name="Justify">Center</property>
           </widget>
           <packing>
             <property name="Position">1</property>

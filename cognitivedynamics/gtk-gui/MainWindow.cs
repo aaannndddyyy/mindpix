@@ -50,7 +50,7 @@ public partial class MainWindow {
         this.AddAccelGroup(this.UIManager.AccelGroup);
         this.Events = ((Gdk.EventMask)(268));
         this.Name = "MainWindow";
-        this.Title = Mono.Unix.Catalog.GetString("Cognitive dynamics proposition test");
+        this.Title = Mono.Unix.Catalog.GetString("Cognitive dynamics test");
         this.WindowPosition = ((Gtk.WindowPosition)(1));
         this.Resizable = false;
         this.AllowGrow = false;
@@ -71,6 +71,8 @@ public partial class MainWindow {
         this.lblProposition = new Gtk.Label();
         this.lblProposition.Name = "lblProposition";
         this.lblProposition.LabelProp = Mono.Unix.Catalog.GetString(" ");
+        this.lblProposition.Wrap = true;
+        this.lblProposition.Justify = ((Gtk.Justification)(2));
         this.vbox1.Add(this.lblProposition);
         Gtk.Box.BoxChild w3 = ((Gtk.Box.BoxChild)(this.vbox1[this.lblProposition]));
         w3.Position = 1;
