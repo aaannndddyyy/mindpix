@@ -1,20 +1,20 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workbench ActiveDocument="DEBIAN/control" ctype="Workbench">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Main.cs" ctype="Workbench">
     <Files>
-      <File FileName="../../sentience/applications/fishfood/MersenneTwister.cs" Line="444" Column="1" />
       <File FileName="../mpmist/README.txt" Line="1" Column="1" />
-      <File FileName="Main.cs" Line="33" Column="34" />
-      <File FileName="minimind.cs" Line="965" Column="34" />
+      <File FileName="../../sentience/applications/fishfood/MersenneTwister.cs" Line="444" Column="1" />
+      <File FileName="Main.cs" Line="143" Column="1" />
+      <File FileName="minimind.cs" Line="1460" Column="1" />
       <File FileName="DEBIAN/control" Line="2" Column="13" />
       <File FileName="AssemblyInfo.cs" Line="20" Column="32" />
+      <File FileName="pixel.cs" Line="230" Column="1" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
           <Node name="mpexport" expanded="True">
-            <Node name="DEBIAN" expanded="True">
-              <Node name="control" selected="True" />
-            </Node>
+            <Node name="DEBIAN" expanded="True" />
+            <Node name="Main.cs" selected="True" />
           </Node>
         </State>
       </Pad>

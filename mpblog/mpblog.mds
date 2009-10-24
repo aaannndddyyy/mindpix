@@ -1,0 +1,16 @@
+<Combine fileversion="2.0">
+  <Configurations active="Debug">
+    <Configuration name="Debug" ctype="CombineConfiguration">
+      <Entry build="True" name="mpblog" configuration="Debug" />
+    </Configuration>
+    <Configuration name="Release" ctype="CombineConfiguration">
+      <Entry build="True" name="mpblog" configuration="Release" />
+    </Configuration>
+  </Configurations>
+  <StartMode startupentry="mpblog" single="True">
+    <Execute type="None" entry="mpblog" />
+  </StartMode>
+  <Entries>
+    <Entry filename="mpblog.mdp" />
+  </Entries>
+</Combine>

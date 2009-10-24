@@ -113,6 +113,10 @@ namespace cognitivedynamics
 			float average_decision_time = 0;
 			int average_decision_time_hits=0;
 			DateTime prev_timestamp=new DateTime(1900,1,1);
+
+			byte[] test_image2 = new byte[test_image.Length];
+			for (int i = image_width*image_height*3-1; i >= 0; i--)
+				test_image2[i]=255;
 			
             try
             {
@@ -171,7 +175,13 @@ namespace cognitivedynamics
 						int y = Convert.ToInt32(Convert.ToSingle(s2[2]));
 						if (t > 0)
 						{
-							drawing.drawLine(test_image, image_width, image_height, prev_x, prev_y, x,y, 0,0,0,0,false);
+							int entropy = (5 - Math.Abs(coherence_index - 5)) * 255 / 5;
+							//Console.WriteLine("entropy = " + entropy.ToString());
+							
+							if (coherence_index == 9)
+							    drawing.drawLine(test_image, image_width, image_height, prev_x, prev_y, x,y, entropy,0,255-entropy,0,false);
+							if (coherence_index == 5)
+							    drawing.drawLine(test_image2, image_width, image_height, prev_x, prev_y, x,y, entropy,0,255-entropy,0,false);
 							
 							int step=1;
 							if (y < prev_y) step = -1;
@@ -220,7 +230,9 @@ namespace cognitivedynamics
 			}
 
 			BitmapArrayConversions.updatebitmap_unsafe(test_image, bmp);
-			bmp.Save("test_results.jpg",System.Drawing.Imaging.ImageFormat.Jpeg);
+			bmp.Save("test_results_low_entropy.jpg",System.Drawing.Imaging.ImageFormat.Jpeg);
+			BitmapArrayConversions.updatebitmap_unsafe(test_image2, bmp);
+			bmp.Save("test_results_high_entropy.jpg",System.Drawing.Imaging.ImageFormat.Jpeg);
 			
 			for (int i = image_width*image_height*3-1; i >= 0; i--)
 				test_image[i]=255;
