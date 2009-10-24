@@ -2,7 +2,7 @@ Package: mpmist
 Version: 0.3
 Architecture: i386
 Maintainer: Bob Mottram <fuzzgun@gmail.com>
-Depends: mono-runtime (>= 1.1.8.1), mono-2.0-runtime (>= 2.0), mysql-server, libmysql5.0-cil
+Depends: mono-runtime, mysql-server, libmysql5.0-cil
 Recommends: monodoc-mysql5.0-manual
 Suggests: 
 Section: programming

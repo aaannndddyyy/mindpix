@@ -2,7 +2,7 @@ Package: mpblog
 Version: 0.1
 Architecture: i386
 Maintainer: Bob Mottram <fuzzgun@gmail.com>
-Depends: mono-runtime (>= 1.1.8.1), mono-2.0-runtime (>= 2.0), twidge
+Depends: mono-runtime, twidge
 Recommends: 
 Suggests: 
 Section: programming
