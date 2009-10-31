@@ -1,5 +1,5 @@
 Package: mpgac
-Version: 0.31
+Version: 0.4
 Architecture: i386
 Maintainer: Bob Mottram <fuzzgun@gmail.com>
 Depends: mono-runtime

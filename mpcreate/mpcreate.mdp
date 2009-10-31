@@ -3,7 +3,7 @@
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="mpcreate" />
       <Build debugmode="True" target="Exe" />
-      <Execution runwithwarnings="True" commandlineparameters="-load /usr/bin/mindpixels.txt" consolepause="False" runtime="MsNet" />
+      <Execution runwithwarnings="True" commandlineparameters="-map /home/motters/Desktop/mindpixelmap.png -plot 0" consolepause="False" runtime="MsNet" />
       <EnvironmentVariables />
       <CodeGeneration compiler="Mcs" warninglevel="3" optimize="False" unsafecodeallowed="True" generateoverflowchecks="False" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
@@ -32,6 +32,7 @@
     <File name="BitmapArrayConversions.cs" subtype="Code" buildaction="Compile" />
     <File name="nysiis.cs" subtype="Code" buildaction="Compile" />
     <File name="metaphone.cs" subtype="Code" buildaction="Compile" />
+    <File name="verbs.cs" subtype="Code" buildaction="Compile" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />

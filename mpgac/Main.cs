@@ -49,6 +49,7 @@ namespace mpgac
 						int no_of_records = 0;
 						float[] index1 = null;
 						float[] index2 = null;
+						float[] index3 = null;
 						
 						// load the indexes
 						StreamReader oRead = null;
@@ -66,10 +67,12 @@ namespace mpgac
 							no_of_records = Convert.ToInt32(oRead.ReadLine());
 							index1 = new float[no_of_records];
 							index2 = new float[no_of_records];
+							index3 = new float[no_of_records];
 							for (int i = 0; i < no_of_records; i++)
 							{
 								index1[i] = Convert.ToSingle(oRead.ReadLine());
 								index2[i] = Convert.ToSingle(oRead.ReadLine());
+								index3[i] = Convert.ToSingle(oRead.ReadLine());
 							}
 							oRead.Close();
 						}
@@ -87,13 +90,13 @@ namespace mpgac
 						
 						if (question.StartsWith("-validate "))
 						{
-							Validate(index1,index2,image_width,img,args[args.Length-1],"Mind Hack");
+							Validate(index1,index2,index3,image_width,img,args[args.Length-1],"Mind Hack");
 						}
 						else
 						{						
 							//Console.WriteLine("args: " + question);
 							
-							int answer = GetAnswer(question, index1, index2,image_width,img);
+							int answer = GetAnswer(question, index1, index2, index3, image_width,img);
 							switch(answer)
 							{
 								case 1: {
@@ -120,6 +123,7 @@ namespace mpgac
 		    string question,
 		    float[] index1,
 		    float[] index2,
+		    float[] index3,
 		    int image_width,
 		    byte[] img)
 		{
@@ -129,6 +133,8 @@ namespace mpgac
 			float coordinate_phoneme = GetNgramIndex(phoneme_index, 80);
             string index_soundex = Soundex.ToSoundexStandardised(question, false, false);
 			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
+            string index_verbs = verbs.GetVerbClasses(question);
+			float coordinate_verbs = GetNgramIndex(index_verbs, 80);
 			
 			int idx1 = 0;
 			for (idx1 = 0; idx1 < no_of_records; idx1++)
@@ -137,23 +143,41 @@ namespace mpgac
 			int idx2 = 0;
 			for (idx2 = 0; idx2 < no_of_records; idx2++)
 				if (index2[idx2] >= coordinate_soundex) break;
+
+			int idx3 = 0;
+			for (idx3 = 0; idx3 < no_of_records; idx3++)
+				if (index3[idx3] >= coordinate_verbs) break;
 			
 			int x = idx1 * image_width / no_of_records;
 			int y = idx2 * image_width / no_of_records;
-			if ((x < image_width) && (y < image_width))
+			if ((x < image_width) && 
+			    (y < image_width))
 			{
-			    int n = ((y * image_width) + x)*3;
-				int r = img[n+2];
-				int g = img[n+1];
-				int b = img[n];
+				int z = idx3 * 24 / no_of_records;
+			    				
+				int n = ((y * image_width) + x) * 3;
 				
-				if (!((r==0) && (g==0) && (b==0)))
+				result = -1;
+				int v = 0;
+				if (z < 8)
 				{
-					if (g > 0)
-						result=1;
-					else
-						result=-1;
+					v = ((int)img[n]) & (int)Math.Pow(2,z);
+					if (v != 0) result = 1;
 				}
+				else
+				{
+					if (z < 16)
+					{
+						v = ((int)img[n+1]) & (int)Math.Pow(2,z-8);
+					    if (v != 0) result = 1;
+					}
+					else
+					{
+						v = ((int)img[n+2]) & (int)Math.Pow(2,z-16);
+						if (v != 0) result = 1;
+					}
+				}
+				
 			}						
 			return(result);
 		}
@@ -208,6 +232,7 @@ namespace mpgac
         static void Validate(
 		    float[] index1,
 		    float[] index2,
+		    float[] index3,
 		    int image_width,
 		    byte[] img,
 		    string mindpixels_filename, 
@@ -253,7 +278,7 @@ namespace mpgac
 								if (coherence > 1) coherence = 1;
 	                            question = str.Substring(6);
 
-								int answer = GetAnswer(question, index1, index2,image_width,img);
+								int answer = GetAnswer(question, index1, index2, index3, image_width,img);
 								switch(answer)
 								{
 									case 1: {

@@ -34,7 +34,7 @@ namespace mpmist
 		public static void Main(string[] args)
 		{
 			Console.WriteLine("Minimum Intelligent Signal Test M.I.S.T.");
-			Console.WriteLine("Version 0.3");
+			Console.WriteLine("Version 0.4");
 			
             // default parameters for the database
             string server_name = "localhost";
@@ -310,9 +310,11 @@ namespace mpmist
 			//Metaphone.ToMetaphoneStandardised(question, false, ref standardised_index_primary, ref standardised_index_secondary);
 			//string index_metaphone = standardised_index_primary;
 			string index_soundex = Soundex.ToSoundexStandardised(question, false, false);
+			string index_verbs = verbs.GetVerbClasses(question);
 
 			float coordinate_ngram3 = GetNgramIndex(index_ngram3, 80);
 			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
+			float coordinate_verbs = GetNgramIndex(index_verbs, 80);
 			//float coordinate_metaphone = GetNgramIndex(index_metaphone, 80);
 			
             if ((server_name == "") ||
@@ -332,8 +334,12 @@ namespace mpmist
 			Query = "SELECT Hash,Soundex FROM " + table_name + " WHERE Soundex < " + coordinate_soundex.ToString() + " ORDER BY Soundex;";
 			pixels = RunMySqlCommand(Query, connection_str, 2);
 			int index_y = pixels.Count * image_width / no_of_records;
+
+			Query = "SELECT Hash,verbs FROM " + table_name + " WHERE verbs < " + coordinate_verbs.ToString() + " ORDER BY verbs;";
+			pixels = RunMySqlCommand(Query, connection_str, 2);
+			int index_z = pixels.Count * 3 / no_of_records;
 			
-			int n = (index_y * image_width) + index_x;
+			int n = (((index_y * image_width) + index_x)*3) + index_z;
 			float prob = LogOddsToProbability(coherence[n]);
 			
 			if (prob >= 0.5)
@@ -658,10 +664,8 @@ namespace mpmist
 		    ref int no_of_records)
         {
 			int radius = 3;
-			coherence = new float[image_width * image_width];
-			float[] emotionmap = new float[image_width * image_width];
-			bool[] evidence = new bool[image_width * image_width];
-			bool[] evidence_emotion = new bool[image_width * image_width];
+			int depth = 3;
+			coherence = new float[image_width * image_width * depth];
 			
             if ((server_name == "") ||
                 (server_name == null))
@@ -679,11 +683,16 @@ namespace mpmist
 			Query = "SELECT Hash FROM mindpixels ORDER BY Soundex;";
 			ArrayList result_soundex = RunMySqlCommand(Query, connection_str, 1);
 
+			Query = "SELECT Hash FROM mindpixels ORDER BY Verbs;";
+			ArrayList result_verbs = RunMySqlCommand(Query, connection_str, 1);
+
 			if ((result_ngram3 != null) &&
-			    (result_soundex != null))
+			    (result_soundex != null) &&
+			    (result_verbs != null))
 			{
 				int[] hash1 = new int[result_ngram3.Count];
 				int[] hash2 = new int[result_soundex.Count];
+				int[] hash3 = new int[result_verbs.Count];
 				float[] pixelcoherence = new float[result_ngram3.Count];
 				float[] pixelemotion = new float[result_ngram3.Count];
 				
@@ -699,7 +708,6 @@ namespace mpmist
 					int h1 = Convert.ToInt32(s0);
 					hash1[i] = h1;
 					pixelcoherence[i] = Convert.ToSingle(s1) / (Convert.ToSingle(s1)+Convert.ToSingle(s2));
-					pixelemotion[i] = Convert.ToSingle(s3);
 				}
 				for (int i = 0; i < max; i++)
 				{
@@ -709,12 +717,22 @@ namespace mpmist
 					hash2[i] = h2;
 				}
 				for (int i = 0; i < max; i++)
+				{
+					ArrayList row = (ArrayList)result_verbs[i];
+					string s0 = Convert.ToString(row[0]);
+					int h3 = Convert.ToInt32(s0);
+					hash3[i] = h3;
+				}
+				for (int i = 0; i < max; i++)
 				{				
 					int j = Array.IndexOf(hash2, hash1[i]);
 					if (j > -1)
 					{
+						int k = Array.IndexOf(hash3, hash1[i]);
+						
 						int x = (int)(i * image_width / (float)max);
 						int y = (int)(j * image_width / (float)max);
+						int z = (int)(k * 3 / (float)max);
 						
 						for (int yy = y - radius; yy <= y + radius; yy++)
 						{
@@ -727,15 +745,12 @@ namespace mpmist
 									int dx = xx-x;
 									int dy = yy-y;
 									float dist = (float)Math.Sqrt(dx*dx + dy*dy);
-									float fraction = dist / (float)radius;
-									
-								    int n = (yy * image_width) + xx;
-									coherence[n] += LogOdds(0.5f + ((pixelcoherence[i]-0.5f) * Gaussian(fraction)));
-									evidence[n] = true;
-									if (pixelemotion[i] != 0)
+									if (dist < radius)
 									{
-									    emotionmap[n] += pixelemotion[i] * Gaussian(fraction);
-									    evidence_emotion[n] = true;
+										float fraction = dist / (float)radius;
+										
+									    int n = (((yy * image_width) + xx)*depth) + z;
+										coherence[n] += LogOdds(0.5f + ((pixelcoherence[i]-0.5f) * Gaussian(fraction)));
 									}
 								}
 							}
@@ -873,11 +888,10 @@ namespace mpmist
             string password,
 		    int map_width)
         {
-			int radius = 5;
-			float[] coherence = new float[map_width * map_width];
-			float[] emotionmap = new float[map_width * map_width];
-			bool[] evidence = new bool[map_width * map_width];
-			bool[] evidence_emotion = new bool[map_width * map_width];
+			int radius = 3;
+			int depth = 3;
+			float[] coherence = new float[map_width * map_width * depth];
+			bool[] evidence = new bool[map_width * map_width * depth];
 			
             if ((server_name == "") ||
                 (server_name == null))
@@ -895,13 +909,17 @@ namespace mpmist
 			Query = "SELECT Hash FROM mindpixels ORDER BY Soundex;";
 			ArrayList result_ngram5 = RunMySqlCommand(Query, connection_str, 1);
 
+			Query = "SELECT Hash FROM mindpixels ORDER BY Verbs;";
+			ArrayList result_verbs = RunMySqlCommand(Query, connection_str, 1);
+
 			if ((result_ngram3 != null) &&
-			    (result_ngram5 != null))
+			    (result_ngram5 != null) &&
+			    (result_verbs != null))
 			{
 				int[] hash1 = new int[result_ngram3.Count];
 				int[] hash2 = new int[result_ngram5.Count];
+				int[] hash3 = new int[result_verbs.Count];
 				float[] pixelcoherence = new float[result_ngram3.Count];
-				float[] pixelemotion = new float[result_ngram3.Count];
 				
 				int max = result_ngram3.Count;
 				for (int i = 0; i < max; i++)
@@ -914,7 +932,6 @@ namespace mpmist
 					int h1 = Convert.ToInt32(s0);
 					hash1[i] = h1;
 					pixelcoherence[i] = Convert.ToSingle(s1) / (Convert.ToSingle(s1)+Convert.ToSingle(s2));
-					pixelemotion[i] = Convert.ToSingle(s3);
 				}
 				for (int i = 0; i < max; i++)
 				{
@@ -924,12 +941,22 @@ namespace mpmist
 					hash2[i] = h2;
 				}
 				for (int i = 0; i < max; i++)
+				{
+					ArrayList row = (ArrayList)result_verbs[i];
+					string s0 = Convert.ToString(row[0]);
+					int h3 = Convert.ToInt32(s0);
+					hash3[i] = h3;
+				}
+				for (int i = 0; i < max; i++)
 				{				
 					int j = Array.IndexOf(hash2, hash1[i]);
 					if (j > -1)
 					{
+						int k = Array.IndexOf(hash3, hash1[i]);
+						
 						int x = (int)(i * map_width / (float)max);
 						int y = (int)(j * map_width / (float)max);
+						int z = (int)(k * depth / (float)max);
 						
 						for (int yy = y - radius; yy <= y + radius; yy++)
 						{
@@ -942,15 +969,13 @@ namespace mpmist
 									int dx = xx-x;
 									int dy = yy-y;
 									float dist = (float)Math.Sqrt(dx*dx + dy*dy);
-									float fraction = dist / (float)radius;
-									
-								    int n = (yy * map_width) + xx;
-									coherence[n] += LogOdds(0.5f + ((pixelcoherence[i]-0.5f) * Gaussian(fraction)));
-									evidence[n] = true;
-									if (pixelemotion[i] != 0)
+									if (dist < radius)
 									{
-									    emotionmap[n] += pixelemotion[i] * Gaussian(fraction);
-									    evidence_emotion[n] = true;
+										float fraction = dist / (float)radius;
+										
+									    int n = ((yy * map_width) + xx)*depth + z;
+										coherence[n] += LogOdds(0.5f + ((pixelcoherence[i]-0.5f) * Gaussian(fraction)));
+										evidence[n] = true;
 									}
 								}
 							}

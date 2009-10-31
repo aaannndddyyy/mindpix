@@ -1,5 +1,5 @@
 Package: mpblog
-Version: 0.1
+Version: 0.4
 Architecture: i386
 Maintainer: Bob Mottram <fuzzgun@gmail.com>
 Depends: mono-runtime, twidge

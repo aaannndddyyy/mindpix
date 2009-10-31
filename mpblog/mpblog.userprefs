@@ -1,19 +1,27 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workbench ActiveDocument="Main.cs" ctype="Workbench">
+  <MonoDevelop.Ide.Workbench ActiveDocument="AssemblyInfo.cs" ctype="Workbench">
     <Files>
-      <File FileName="Main.cs" Line="30" Column="26" />
+      <File FileName="Main.cs" Line="59" Column="7" />
+      <File FileName="DEBIAN/control" Line="6" Column="13" />
+      <File FileName="AssemblyInfo.cs" Line="20" Column="32" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
           <Node name="mpblog" expanded="True">
             <Node name="DEBIAN" expanded="True" />
-            <Node name="Main.cs" selected="True" />
+            <Node name="AssemblyInfo.cs" selected="True" />
           </Node>
         </State>
       </Pad>
       <Pad Id="ClassPad">
         <State expanded="True" selected="True" />
+      </Pad>
+      <Pad Id="MonoDevelop.NUnit.TestPad">
+        <State selected="True" />
+      </Pad>
+      <Pad Id="MonoDevelop.Debugger.WatchPad">
+        <State />
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>

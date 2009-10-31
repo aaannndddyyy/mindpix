@@ -34,6 +34,12 @@ namespace mpcreate
 	{
 		public static void Main(string[] args)
 		{	
+			//verbs vrb = new verbs();
+			//vrb.LoadFromPropBank("/home/motters/develop/propbank");
+			//vrb.LoadFromVerbNet("/home/motters/develop/verbnet-3.0");
+			//vrb.SaveArray("/home/motters/Desktop/verb_classes.txt");
+			//Console.WriteLine(verbs.GetVerbClasses("does a chair have legs?"));
+			
 			/*
 			Console.WriteLine("105 = " + phoneme.ConvertNumber(105));
 			Console.WriteLine(phoneme.ConvertText("Alan's  psychedelic breakfast"));
@@ -51,8 +57,9 @@ namespace mpcreate
 			Console.WriteLine(Soundex.ToSoundexStandardised("This is a test"));
 			*/
 			
+			
 			Console.WriteLine("mpcreate: A utility for creating mindpixels");
-			Console.WriteLine("Version 0.3");
+			Console.WriteLine("Version 0.4");
 			
             // default parameters for the database
             string server_name = "localhost";
@@ -61,7 +68,7 @@ namespace mpcreate
             string password = "password";
             string mp_table_name = "mindpixels";
             string users_table_name = "users";
-			string soundex_table_name = "wordsoundex";
+			//string soundex_table_name = "wordsoundex";
 			
             string[] mp_fields = {
 				"Id", "BINARY(16) NOT NULL", // that's 16 bytes, not 16 bits!
@@ -72,6 +79,7 @@ namespace mpcreate
                 "Coherence", "FLOAT",
 				"Ngram3", "FLOAT",
 				"Soundex", "FLOAT",
+				"Verbs", "FLOAT",
 				"NYSIIS", "FLOAT",
 				"MetaphonePrimary", "FLOAT",
 				"MetaphoneSecondary", "FLOAT",
@@ -147,23 +155,22 @@ namespace mpcreate
 			                string load_filename = commandline.GetParameterValue("load", parameters);
 							if (load_filename != "")
 							{
-								/*
-								List<string> word = new List<string>();
-								List<string> word_cooccurrence = new List<string>();
 								
-								loadGACWordFrequencies(
-					                server_name,
-					                database_name,
-					                user_name,
-					                password,
-								    load_filename, 
-								    "Mind Hack",
-								    word,
-									word_cooccurrence);
+								//List<string> word = new List<string>();
+								//List<string> word_cooccurrence = new List<string>();
 								
-								Console.WriteLine(word.Count.ToString() + " words");
-								Console.WriteLine(word_cooccurrence.Count.ToString() + " word cooccurrences");
-								*/
+								//loadGACWordFrequencies(
+					                //server_name,
+					                //database_name,
+					                //user_name,
+					                //password,
+								    //load_filename, 
+								    //"Mind Hack",
+								    //word,
+									//word_cooccurrence);
+								
+								//Console.WriteLine(word.Count.ToString() + " words");
+								//Console.WriteLine(word_cooccurrence.Count.ToString() + " word cooccurrences");								
 								
 								
 								List<string> differential = new List<string>();
@@ -193,18 +200,18 @@ namespace mpcreate
 					                user_name, 
 					                password, 
 					                mp_table_name,
-					                users_table_name,
-								    soundex_table_name);
+					                users_table_name);
+								    //soundex_table_name);
 
-								/*
-								UpdateConnections(
-								    server_name,
-								    database_name,
-								    user_name,
-								    password,
-								    mp_table_name,
-									soundex_table_name);
-									*/
+								
+								//UpdateConnections(
+								    //server_name,
+								    //database_name,
+								    //user_name,
+								    //password,
+								    //mp_table_name,
+									//soundex_table_name);
+									
 							}
 							else
 							{
@@ -291,25 +298,25 @@ namespace mpcreate
 										                users_field_type,-1,0,1);
 
 													
-													CreateTable(
-										                server_name,
-										                database_name,
-										                user_name,
-										                password,
-										                soundex_table_name,
-										                soundex_fields_to_be_inserted,
-										                soundex_field_type,-1,0,1);
+													//CreateTable(
+										                //server_name,
+										                //database_name,
+										                //user_name,
+										                //password,
+										                //soundex_table_name,
+										                //soundex_fields_to_be_inserted,
+										                //soundex_field_type,-1,0,1);
 
-											        InsertWordsIntoMySql(
-													    question_hash,
-											            question,
-											            server_name,
-											            database_name,
-											            user_name,
-											            password,
-											            soundex_table_name,
-											            soundex_fields_to_be_inserted,
-											            soundex_field_type);
+											        //InsertWordsIntoMySql(
+													    //question_hash,
+											            //question,
+											            //server_name,
+											            //database_name,
+											            //user_name,
+											            //password,
+											            //soundex_table_name,
+											            //soundex_fields_to_be_inserted,
+											            //soundex_field_type);
 													
 									                InsertMindpixelIntoMySql(
 													    question_hash,
@@ -351,6 +358,12 @@ namespace mpcreate
 								}
 							}
 							
+							int plot_type = 0;
+							string plot_type_str = commandline.GetParameterValue("plot", parameters);
+							if (plot_type_str != "")
+							{
+								plot_type = Convert.ToInt32(plot_type_str);
+							}
 							
 							string map_filename = commandline.GetParameterValue("map", parameters);
 							if (map_filename != "")
@@ -358,8 +371,10 @@ namespace mpcreate
 								float[] coherence = null;
 								int[] hash1 = null;
 								int[] hash2 = null;
+								int[] hash3 = null;
 								float[] index1 = null;
 								float[] index2 = null;
+								float[] index3 = null;
 								Console.WriteLine("Saving map...");
 								ShowPlot(
 					                server_name,
@@ -369,11 +384,14 @@ namespace mpcreate
 								    1000,
 								    map_filename,
 								    false,
+								    plot_type,
 								    ref coherence,
 								    ref hash1,
 								    ref hash2,
+								    ref hash3,
 								    ref index1,
-								    ref index2);
+								    ref index2,
+								    ref index3);
 								Console.WriteLine("Saved " + map_filename);
 							}
 							
@@ -383,8 +401,10 @@ namespace mpcreate
 								float[] coherence = null;
 								int[] hash1 = null;
 								int[] hash2 = null;
+								int[] hash3 = null;
 								float[] index1 = null;
 								float[] index2 = null;
+								float[] index3 = null;
 								Console.WriteLine("Saving map...");
 								ShowPlot(
 					                server_name,
@@ -394,11 +414,14 @@ namespace mpcreate
 								    1000,
 								    map_mono_filename,
 								    false,
+								    plot_type,
 								    ref coherence,
 								    ref hash1,
 								    ref hash2,
+								    ref hash3,
 								    ref index1,
-								    ref index2);
+								    ref index2,
+								    ref index3);
 								Console.WriteLine("Saved " + map_filename);
 							}
 							
@@ -408,8 +431,10 @@ namespace mpcreate
 								float[] coherence = null;
 								int[] hash1 = null;
 								int[] hash2 = null;
+								int[] hash3 = null;
 								float[] index1 = null;
 								float[] index2 = null;
+								float[] index3 = null;
 								Console.Write("Generating map...");
 								ShowPlot(
 					                server_name,
@@ -419,16 +444,19 @@ namespace mpcreate
 								    1000,
 								    "",
 								    true,
+								    plot_type,
 								    ref coherence,
 								    ref hash1,
 								    ref hash2,
+								    ref hash3,
 								    ref index1,
-								    ref index2);
+								    ref index2,
+								    ref index3);
 								Console.WriteLine("Done");
 								
 								SaveLookupTables(
 								    lookup_tables_filename,
-								    index1, index2,
+								    index1, index2, index3,
 								    coherence);
 								Console.WriteLine("Saved lookup tables to " + lookup_tables_filename);
 							}
@@ -446,6 +474,7 @@ namespace mpcreate
             string filename,
 			float[] index1, 
 		    float[] index2,
+		    float[] index3,
 			float[] coherence)
 		{			
 			StreamWriter oWrite = null;
@@ -465,6 +494,7 @@ namespace mpcreate
 				{
 					oWrite.WriteLine(index1[i].ToString());
 					oWrite.WriteLine(index2[i].ToString());
+					oWrite.WriteLine(index3[i].ToString());
 				}
 				oWrite.Close();
 			}			
@@ -562,7 +592,7 @@ namespace mpcreate
 				}
 				if (table_name == "mindpixels")
 				{
-					Query += ",INDEX (Ngram3),INDEX (Soundex),INDEX (Connections),INDEX (NYSIIS),INDEX (MetaphonePrimary),INDEX (MetaphoneSecondary),INDEX (Emotion)";
+					Query += ",INDEX (Ngram3),INDEX (Soundex),INDEX (Verbs),INDEX (Connections),INDEX (NYSIIS),INDEX (MetaphonePrimary),INDEX (MetaphoneSecondary),INDEX (Emotion)";
 				}
 				Query += ")";
 				
@@ -952,6 +982,7 @@ namespace mpcreate
             List<string> fields_to_be_inserted,
             List<string> field_type)
         {
+			int plot_type = 0;
             if ((server_name == "") ||
                 (server_name == null))
                 server_name = "localhost";
@@ -961,12 +992,14 @@ namespace mpcreate
 			
 			string index_ngram3 = phoneme.ToNgramStandardised(question, 3, false);
 			string index_soundex = Soundex.ToSoundexStandardised(question, false, false);
+			string index_verbs = verbs.GetVerbClasses(question);
 			string index_metaphone_primary="", index_metaphone_secondary="";
 			Metaphone.ToMetaphoneStandardised(question, false, ref index_metaphone_primary, ref index_metaphone_secondary);
 			string index_nysiis = NYSIIS.ToNYSIISStandardised(question, false);
 
 			float coordinate_ngram3 = GetNgramIndex(index_ngram3, 80);
 			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
+			float coordinate_verbs = GetNgramIndex(index_verbs, 80);
 			float coordinate_nysiis = GetNgramIndex(index_nysiis, 80);
 			float coordinate_metaphone_primary = GetNgramIndex(index_metaphone_primary, 80);
 			float coordinate_metaphone_secondary = GetNgramIndex(index_metaphone_secondary, 80);
@@ -978,8 +1011,10 @@ namespace mpcreate
 				float[] coherence2 = null;
 				int[] hash1 = null;
 				int[] hash2 = null;
+				int[] hash3 = null;
 				float[] index1 = null;
 				float[] index2 = null;
+				float[] index3 = null;
                 ShowPlot(
                     server_name,
                     database_name,
@@ -988,11 +1023,14 @@ namespace mpcreate
 		            1000,
 		            "mindpixels.bmp",
 				    false,
+				    plot_type,
 				    ref coherence2,
 				    ref hash1,
 				    ref hash2,
+				    ref hash3,
 				    ref index1,
-				    ref index2);
+				    ref index2,
+				    ref index3);
 					
 				plot_ctr = 0;
 			}
@@ -1054,6 +1092,7 @@ namespace mpcreate
 						" Coherence='" + coherence.ToString() + "'," +
 					    " Ngram3='" + coordinate_ngram3.ToString() + "'," +
 					    " Soundex='" + coordinate_soundex.ToString() + "'," +
+						" Verbs='" + coordinate_verbs.ToString() + "'," +
 					    " NYSIIS='" + coordinate_nysiis.ToString() + "'," +
 					    " MetaphonePrimary='" + coordinate_metaphone_primary.ToString() + "'," +
 					    " MetaphoneSecondary='" + coordinate_metaphone_secondary.ToString() + "'," +
@@ -1131,6 +1170,8 @@ namespace mpcreate
 			    field_value.Add(coordinate_ngram3.ToString());
 			    field_name.Add("Soundex");
 			    field_value.Add(coordinate_soundex.ToString());
+			    field_name.Add("Verbs");
+			    field_value.Add(coordinate_verbs.ToString());
 			    field_name.Add("Connections");
 			    field_value.Add("0");
 			    field_name.Add("NYSIIS");
@@ -1530,18 +1571,21 @@ namespace mpcreate
             List<string> fields_to_be_inserted,
             List<string> field_type)
         {
+			int plot_type = 0;
             if ((server_name == "") ||
                 (server_name == null))
                 server_name = "localhost";
 			
 			string index_ngram3 = phoneme.ToNgramStandardised(question, 3, false);
 			string index_soundex = Soundex.ToSoundexStandardised(question, false, false);
+			string index_verbs = verbs.GetVerbClasses(question);
 			string index_metaphone_primary="", index_metaphone_secondary="";
 			Metaphone.ToMetaphoneStandardised(question, false, ref index_metaphone_primary, ref index_metaphone_secondary);
 			string index_nysiis = NYSIIS.ToNYSIISStandardised(question, false);
 
 			float coordinate_ngram3 = GetNgramIndex(index_ngram3, 80);
 			float coordinate_soundex = GetNgramIndex(index_soundex, 80);
+			float coordinate_verbs = GetNgramIndex(index_verbs, 80);
 			float coordinate_nysiis = GetNgramIndex(index_nysiis, 80);
 			float coordinate_metaphone_primary = GetNgramIndex(index_metaphone_primary, 80);
 			float coordinate_metaphone_secondary = GetNgramIndex(index_metaphone_secondary, 80);
@@ -1553,8 +1597,10 @@ namespace mpcreate
 				float[] coherence2 = null;
 				int[] hash1 = null;
 				int[] hash2 = null;
+				int[] hash3 = null;
 				float[] index1 = null;
 				float[] index2 = null;
+				float[] index3 = null;
                 ShowPlot(
                     server_name,
                     database_name,
@@ -1563,11 +1609,14 @@ namespace mpcreate
 		            1000,
 		            "mindpixels.bmp",
 				    false,
+				    plot_type,
 				    ref coherence2,
 				    ref hash1,
 				    ref hash2,
+				    ref hash3,
 				    ref index1,
-				    ref index2);
+				    ref index2,
+				    ref index3);
 				
 				plot_ctr = 0;
 			}
@@ -1612,6 +1661,8 @@ namespace mpcreate
 			field_value.Add(coordinate_ngram3.ToString());
 			field_name.Add("Soundex");
 			field_value.Add(coordinate_soundex.ToString());
+			field_name.Add("Verbs");
+			field_value.Add(coordinate_verbs.ToString());
 		    field_name.Add("Connections");
 		    field_value.Add("0");
 			field_name.Add("NYSIIS");
@@ -1747,17 +1798,33 @@ namespace mpcreate
 		    int image_width,
 		    string filename,
 		    bool mono,
+		    int plot_type,
 		    ref float[] coherence,
 		    ref int[] hash1,
 		    ref int[] hash2,
+		    ref int[] hash3,
 		    ref float[] index1,
-		    ref float[] index2)
+		    ref float[] index2,
+		    ref float[] index3)
         {
-			int radius = 3;
+			int radius = 2;						
+			int depth = 24; //3;
+			if (plot_type == 2) 
+			{
+				depth = 1;
+				radius = 3;
+			}
+			if (plot_type == 3)
+			{
+				radius=3;
+				depth=3;
+			}
+			int radius_sqr = radius*radius;
 			Bitmap bmp = new Bitmap(image_width, image_width, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
 			byte[] img = new byte[image_width * image_width * 3];
-			coherence = new float[image_width * image_width];
-			bool[] occupied = new bool[image_width * image_width];
+
+			coherence = new float[image_width * image_width * depth];
+			bool[] occupied = new bool[image_width * image_width * depth];
 			
 			float[] fraction_lookup = new float[(radius*2+1)*(radius*2+1)];
 			int fctr = 0;
@@ -1786,14 +1853,20 @@ namespace mpcreate
 
 			Query = "SELECT Hash,Soundex FROM mindpixels ORDER BY Soundex;";
 			ArrayList result_soundex = RunMySqlCommand(Query, connection_str, 2);
+
+			Query = "SELECT Hash,verbs FROM mindpixels ORDER BY verbs;";
+			ArrayList result_verbs = RunMySqlCommand(Query, connection_str, 2);
 			
 			if ((result_ngram3 != null) &&
-			    (result_soundex != null))
+			    (result_soundex != null) &&
+			    (result_verbs != null))
 			{
 				hash1 = new int[result_ngram3.Count];
 				hash2 = new int[result_soundex.Count];
+				hash3 = new int[result_verbs.Count];
 				index1 = new float[result_ngram3.Count];
 				index2 = new float[result_soundex.Count];
+				index3 = new float[result_verbs.Count];
 				float[] pixelcoherence = new float[result_ngram3.Count];
 				float[] pixelemotion = new float[result_ngram3.Count];
 				
@@ -1820,12 +1893,23 @@ namespace mpcreate
 					index2[i] = Convert.ToSingle(s1);
 				}
 				for (int i = 0; i < max; i++)
+				{
+					ArrayList row = (ArrayList)result_verbs[i];
+					string s0 = Convert.ToString(row[0]);
+					string s1 = Convert.ToString(row[1]);
+					hash3[i] = Convert.ToInt32(s0);
+					index3[i] = Convert.ToSingle(s1);
+				}
+				for (int i = 0; i < max; i++)
 				{				
 					int j = Array.IndexOf(hash2, hash1[i]);
 					if (j > -1)
 					{
+						int k = Array.IndexOf(hash3, hash1[i]);
+						
 						int x = (int)(i * image_width / (float)max);
 						int y = (int)(j * image_width / (float)max);
+						int z = (int)(k * depth / (float)max);
 						
 						fctr = 0;
 						for (int yy = y - radius; yy <= y + radius; yy++)
@@ -1837,11 +1921,14 @@ namespace mpcreate
 								    ((yy > -1) && (yy < image_width)))
 								{
 									int dx = xx-x;
-									
-								    int n = (yy * image_width) + xx;
-									float incr = LogOdds(0.5f + ((pixelcoherence[i]-0.5f) * fraction_lookup[fctr]));
-									coherence[n] += incr;
-									occupied[n] = true;
+									int r2 = dx*dx + dy*dy;
+									if (r2 < radius_sqr)
+									{									
+								        int n = (((yy * image_width) + xx) * depth) + z;
+									    float incr = LogOdds(0.5f + ((pixelcoherence[i]-0.5f) * fraction_lookup[fctr]));
+									    coherence[n] += incr;
+									    occupied[n] = true;
+									}
 								}
 							}
 							
@@ -1865,35 +1952,153 @@ namespace mpcreate
 			for (int k = coherence.Length-1; k >= 0; k--)
 				coherence[k] = LogOddsToProbability(coherence[k]);
 			
-			for (int k = 0; k < img.Length; k+=3, n2++)
-			{	
-				if (occupied[n2])
+			for (int k = 0; k < img.Length; k+=3, n2+=depth)
+			{									
+				switch (plot_type)
 				{
-				    prob = coherence[n2];
-					
-					if (mono)
-					{
-						img[k] = (byte)(prob*255);
-						img[k+1] = (byte)(prob*255);
-						img[k+2] = (byte)(prob*255);
-					}
-					else
-					{					
-						if (prob > 0.5f)
+				    case 0:
+				    {
+					    int bit;
+						for (int d = 0; d < depth; d++)
 						{
-							int v = (int)((prob-0.5f) * 255*2);
-							if (v > 255) v = 255;
-						    img[k+1] = (byte)v;
+							prob = 0.5f;
+							if (occupied[n2+d])
+							{
+							    prob = coherence[n2+d];	
+							}
+							
+							if (prob > 0.5f)
+							{
+							    if (d < 8)
+							    {
+								    bit = (int)Math.Pow(2, d);
+								    img[k] = (byte)(((int)img[k]) | bit);
+							    }
+							    else
+							    {
+								    if (d < 16)
+								    {
+								        bit = (int)Math.Pow(2, d-8);
+								        img[k+1] = (byte)(((int)img[k+1]) | bit);
+								    }
+								    else
+								    {
+								        bit = (int)Math.Pow(2, d-16);
+								        img[k+2] = (byte)(((int)img[k+2]) | bit);
+								    }
+							    }
+								//img[k + (d % 3)] = (byte)((prob-0.5f)*255*2);
+							}
+						    
 						}
-						else
+					    break;
+				    }
+
+				    case 3:
+				    {
+						for (int d = 0; d < depth; d++)
 						{
-							int v = -(int)((prob-0.5f) * 255*2);
-							if (v > 255) v = 255;
-							img[k+2] = (byte)(v);
-							img[k] = (byte)(255-v);							
-						}					
+							prob = 0.5f;
+							if (occupied[n2+d])
+							{
+							    prob = coherence[n2+d];	
+							}
+						    else
+						    {
+							    int y = (k/3) / image_width;
+							    int x = (k/3) % image_width;
+							    int search_radius = 6;
+							    int search_radius_sqr = search_radius * search_radius;
+							    int tx = x - search_radius;
+							    if (tx < 0) tx = 0;
+							    int ty = y - search_radius;
+							    if (ty < 0) ty = 0;
+							    int bx = x + search_radius;
+							    if (bx >= image_width) bx = image_width-1;
+							    int by = y + search_radius;
+							    if (by >= image_width) by = image_width-1;
+							    float tot = 0;
+							    float weight = 0;
+							    for (int yy = ty; yy <= by; yy++)
+							    {
+								    int dy = yy-y;
+								    for (int xx = tx; xx <= bx; xx++)
+								    {																		    
+									    int k2 = (((yy * image_width) + xx) * 3) + d;
+									    if (occupied[k2])
+									    {
+										    int dx = xx-x;
+										    float dist_sqr = dx*dx + dy*dy;
+										    if (dist_sqr < search_radius_sqr)
+										    {
+										        float dist_inv = 1.0f / (1.0f + dist_sqr);
+										        tot += (coherence[k2]-0.5f) * dist_inv;
+										        weight += dist_inv;
+										    }
+									    }
+								    }
+							    }
+							    if (tot != 0)
+							    {
+								    prob = (tot / weight) + 0.5f;
+							    }
+						    }
+							
+							img[k+d] = (byte)(prob*255);
+						}
+					    break;
+				    }
+					
+					case 1:
+					{
+						if ((occupied[n2]) && (occupied[n2+1]))
+						{
+							if (((coherence[n2] > 0.55f) && (coherence[n2+1] < 0.45f)) ||
+							    ((coherence[n2] < 0.45f) && (coherence[n2+1] > 0.55f)))
+							    img[k+2] = (byte)255;
+						}
+						if ((occupied[n2+1]) && (occupied[n2+2]))
+						{
+							if (((coherence[n2+1] > 0.55f) && (coherence[n2+2] < 0.45f)) ||
+							    ((coherence[n2+1] < 0.45f) && (coherence[n2+2] > 0.55f)))
+							    img[k+2] = (byte)255;
+						}
+						break;
+					}
+								
+					case 2:
+					{
+						if (occupied[n2])
+						{
+						    prob = coherence[n2];	
+							
+							if (mono)
+							{
+								img[k] = (byte)(prob*255);
+								img[k+1] = (byte)(prob*255);
+								img[k+2] = (byte)(prob*255);
+							}
+							else
+							{					
+								if (prob > 0.5f)
+								{
+									int v = (int)((prob-0.5f) * 255*2);
+									if (v > 255) v = 255;
+								    img[k+1] = (byte)v;
+								}
+								else
+								{
+									int v = -(int)((prob-0.5f) * 255*2);
+									if (v > 255) v = 255;
+									img[k+2] = (byte)(v);
+									img[k] = (byte)(255-v);							
+								}					
+							}
+						}
+						break;
 					}
 				}
+				
 			}
 			
 			if ((filename != "") && (filename != null))
@@ -2381,8 +2586,8 @@ namespace mpcreate
 		    string user_name, 
 		    string password, 
 		    string mp_table_name,
-		    string users_table_name,
-		    string soundex_table_name)
+		    string users_table_name)
+		    //string soundex_table_name)
         {
             int no_of_records = NoOfRecords(
 		        server_name,
@@ -2409,17 +2614,17 @@ namespace mpcreate
 				}
 				else
 				{									
-				    no_of_records = NoOfRecords(
-		                server_name,
-		                database_name, 
-		                user_name, 
-		                password, 
-		                soundex_table_name);
-			        if (no_of_records > 1)
-					{
-						Console.WriteLine(soundex_table_name + " table is not empty.  Please empty the table before loading");
-					}
-					else
+				    //no_of_records = NoOfRecords(
+		                //server_name,
+		                //database_name, 
+		                //user_name, 
+		                //password, 
+		                //soundex_table_name);
+			        //if (no_of_records > 1)
+					//{
+						//Console.WriteLine(soundex_table_name + " table is not empty.  Please empty the table before loading");
+					//}
+					//else
 					{				
 			            bool filefound = true;
 			            string str, question;
@@ -2481,16 +2686,16 @@ namespace mpcreate
 											i++;
 											if (rnd.Next(2000) < 2) Console.WriteLine(i.ToString() + (char)9 + question);
 											
-									        InsertWordsIntoMySql(
-											    question_hash,
-									            question,
-									            server_name,
-									            database_name,
-									            user_name,
-									            password,
-									            soundex_table_name,
-									            soundex_fields_to_be_inserted,
-									            soundex_field_type);
+									        //InsertWordsIntoMySql(
+											    //question_hash,
+									            //question,
+									            //server_name,
+									            //database_name,
+									            //user_name,
+									            //password,
+									            //soundex_table_name,
+									            //soundex_fields_to_be_inserted,
+									            //soundex_field_type);
 											
 								            InsertMindpixelWithCoherence(
 											    question_hash,
@@ -3634,6 +3839,7 @@ namespace mpcreate
 			ValidParameters.Add("load");
 			ValidParameters.Add("save");
 			ValidParameters.Add("map");
+			ValidParameters.Add("plot");
 			ValidParameters.Add("mapmono");
 			ValidParameters.Add("lookup");
 			ValidParameters.Add("random");
@@ -3669,6 +3875,7 @@ namespace mpcreate
             Console.WriteLine("         -load <mindpixel file>");
             Console.WriteLine("         -save <mindpixel file>");
             Console.WriteLine("         -map <mindpixel map image file>");
+            Console.WriteLine("         -plot <plot type 0-2>");
             Console.WriteLine("         -mapmono <mindpixel map image file>");
             Console.WriteLine("         -lookup <lookup tables file>");
             Console.WriteLine("         -random <filename>");
